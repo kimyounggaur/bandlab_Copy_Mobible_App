@@ -14,12 +14,14 @@ import { Toast } from './components/common/Toast';
 import { useProjectStore } from './stores/projectStore';
 import { useUiStore } from './stores/uiStore';
 import { useWakeLock } from './hooks/useWakeLock';
+import { initializeFunnel, mark, markEightBarComplete } from './analytics/funnel';
 
-type Route = 'home' | 'studio' | 'tokens' | 'audio';
+type Route = 'home' | 'studio' | 'tokens' | 'audio' | 'funnel';
 function routeFromHash(): Route {
   if (window.location.hash === '#/') return 'home';
   if (import.meta.env.DEV && window.location.hash === '#/dev/tokens') return 'tokens';
   if (import.meta.env.DEV && window.location.hash === '#/dev/audio') return 'audio';
+  if (import.meta.env.DEV && window.location.hash === '#/dev/funnel') return 'funnel';
   return 'studio';
 }
 
@@ -27,8 +29,12 @@ function navigate(route: 'home' | 'studio') {
   window.location.hash = route === 'home' ? '#/' : '#/studio';
 }
 
-const AudioDevPage = lazy(() => import('./components/dev/AudioDevPage').then((module) => ({ default: module.AudioDevPage })));
-const TokensPage = lazy(() => import('./components/dev/TokensPage').then((module) => ({ default: module.TokensPage })));
+const AudioDevPage = import.meta.env.DEV
+  ? lazy(() => import('./components/dev/AudioDevPage').then((module) => ({ default: module.AudioDevPage }))) : null;
+const FunnelPage = import.meta.env.DEV
+  ? lazy(() => import('./components/dev/FunnelPage').then((module) => ({ default: module.FunnelPage }))) : null;
+const TokensPage = import.meta.env.DEV
+  ? lazy(() => import('./components/dev/TokensPage').then((module) => ({ default: module.TokensPage }))) : null;
 const EffectsSheet = lazy(() => import('./components/effects/EffectsSheet').then((module) => ({ default: module.EffectsSheet })));
 const ExportSheet = lazy(() => import('./components/export/ExportSheet').then((module) => ({ default: module.ExportSheet })));
 const RecordSheet = lazy(() => import('./components/recording/RecordSheet').then((module) => ({ default: module.RecordSheet })));
@@ -49,6 +55,7 @@ export default function App() {
   const effectsTrackId = useUiStore((state) => state.effectsTrackId);
   const exportOpen = useUiStore((state) => state.exportOpen);
   const setMode = useUiStore((state) => state.setMode);
+  const hydrateOnboarding = useUiStore((state) => state.hydrateOnboarding);
 
   useWakeLock();
 
@@ -62,6 +69,16 @@ export default function App() {
   useEffect(() => {
     void loadSavedProjects();
   }, [loadSavedProjects]);
+
+  useEffect(() => {
+    void hydrateOnboarding();
+  }, [hydrateOnboarding]);
+
+  useEffect(() => {
+    mark('app_open');
+    void initializeFunnel().catch(() => undefined);
+    markEightBarComplete(useProjectStore.getState().currentProject);
+  }, []);
 
   useEffect(() => {
     const scheduleGc = () => {
@@ -138,8 +155,9 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
-  if (route === 'tokens') return <Suspense fallback={null}><TokensPage /></Suspense>;
-  if (route === 'audio') return <Suspense fallback={null}><AudioDevPage /></Suspense>;
+  if (route === 'tokens' && TokensPage) return <Suspense fallback={null}><TokensPage /></Suspense>;
+  if (route === 'audio' && AudioDevPage) return <Suspense fallback={null}><AudioDevPage /></Suspense>;
+  if (route === 'funnel' && FunnelPage) return <Suspense fallback={null}><FunnelPage /></Suspense>;
 
   if (route === 'home') {
     return <HomePage onOpenProject={() => navigate('studio')} />;

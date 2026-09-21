@@ -4,6 +4,8 @@ import { exportProjectWav } from '../../audio/exporter';
 import { useProjectStore } from '../../stores/projectStore';
 import { useUiStore } from '../../stores/uiStore';
 import { BottomSheet } from '../common/BottomSheet';
+import { consumeSheetHistory } from '../common/sheetHistory';
+import { mark } from '../../analytics/funnel';
 
 export function ExportSheet() {
   const open = useUiStore((state) => state.exportOpen);
@@ -39,6 +41,8 @@ export function ExportSheet() {
         anchor.remove();
         window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
       }
+      mark('first_export');
+      consumeSheetHistory();
       setOpen(false);
     } catch {
       setError('음원 파일을 만들지 못했어요. 다시 시도해 주세요.');
@@ -48,7 +52,7 @@ export function ExportSheet() {
   }
 
   return (
-    <BottomSheet open={open} title="내보내기" onClose={() => { if (!busy) setOpen(false); }} height="half">
+    <BottomSheet open={open} title="내보내기" onClose={() => setOpen(false)} canClose={!busy} height="half">
       <div className="rounded-panel border border-studio-border bg-studio-card p-4">
         <h3 className="text-title font-semibold text-studio-text">WAV 파일로 만들기</h3>
         <p className="mt-2 text-body text-studio-muted">프로젝트를 하나의 음원 파일로 만들어 저장하거나 공유합니다.</p>

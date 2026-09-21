@@ -8,7 +8,9 @@ import { useProjectStore } from '../../stores/projectStore';
 import { useUiStore } from '../../stores/uiStore';
 import type { LoopCategory, LoopGenre } from '../../types/project';
 import { BottomSheet } from '../common/BottomSheet';
+import { consumeSheetHistory } from '../common/sheetHistory';
 import { IconButton } from '../common/IconButton';
+import { mark } from '../../analytics/funnel';
 
 const categoryLabels: Record<LoopCategory | 'all', string> = {
   all: '전체',
@@ -106,8 +108,9 @@ export function LoopLibrarySheet({ onToast }: LoopLibrarySheetProps) {
     }
     loopPreview.stop();
     addLoop(loopId, audioEngine.getPositionInBars());
-    localStorage.setItem('loop-pocket-first-loop', String(Date.now()));
+    mark('first_loop_added', { loopId });
     onToast(selectedTrackId ? '루프를 얹었어요' : '새 트랙을 만들고 루프를 얹었어요');
+    consumeSheetHistory();
     setOpen(false);
   }
 

@@ -70,3 +70,11 @@ Measured at commit `324d578` before the R0 source changes.
 | Sheet Back, UI-close history consumption, home/studio Back | Passed in desktop Chromium |
 | 192/512/maskable and iOS PNG generation | Passed; PNG visually inspected |
 | Android hardware Back, Wake Lock, iOS silent switch/Audio Session, interruption | Not measured on physical devices; see `docs/platform-verification.md` |
+
+## D3 local funnel (2026-09-21)
+
+| Metric | Result |
+|---|---:|
+| Legacy timestamp migration and local metrics | Automated tests passed |
+| Dev funnel route first-sound display | Passed in desktop Chromium; observed 29s including automation delay |
+| Low-end Android and iPhone acoustic time-to-sound | Not measured on physical devices; see `docs/ux-metrics.md` |

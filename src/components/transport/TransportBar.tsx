@@ -4,6 +4,7 @@ import { audioEngine } from '../../audio/engine';
 import { trackScheduler } from '../../audio/trackNodes';
 import { useProjectStore } from '../../stores/projectStore';
 import { loadMeta, saveMeta } from '../../storage/db';
+import { mark } from '../../analytics/funnel';
 import { useUiStore } from '../../stores/uiStore';
 import { formatBarBeat } from '../../utils/music';
 import { IconButton } from '../common/IconButton';
@@ -56,8 +57,7 @@ export function TransportBar({ onRecord, onToast }: TransportBarProps) {
       audioEngine.pause();
     } else {
       await trackScheduler.syncProject(project);
-      audioEngine.play();
-      localStorage.setItem('loop-pocket-first-sound', String(Date.now()));
+      if (audioEngine.play()) mark('first_sound');
       if (/iPhone|iPad|iPod/.test(navigator.userAgent)
         && !await loadMeta<boolean>('ios-silent-hint-shown')) {
         await saveMeta('ios-silent-hint-shown', true);

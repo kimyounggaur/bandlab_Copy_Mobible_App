@@ -8,6 +8,7 @@ import type { NoteEvent } from '../../types/project';
 import { createId } from '../../utils/ids';
 import { barsToSeconds, barsToTonePosition } from '../../utils/music';
 import { EmptyState } from '../common/EmptyState';
+import { loadMeta, saveMeta } from '../../storage/db';
 
 const notes = ['C4', 'D4', 'Eb4', 'G4', 'A4', 'C5', 'D5', 'Eb5'];
 type RecordedHit = { instrument: 'drums' | 'keys_soft'; note: NoteEvent };
@@ -23,7 +24,7 @@ export function InstrumentsPanel() {
   const [recording, setRecording] = useState(false);
   const [quantize, setQuantize] = useState<'off' | '8n' | '16n'>('16n');
   const [events, setEvents] = useState<RecordedHit[]>([]);
-  const [showHint, setShowHint] = useState(() => !localStorage.getItem('loop-pocket-pad-hint'));
+  const [showHint, setShowHint] = useState(false);
   const [instrumentError, setInstrumentError] = useState<string | null>(null);
   const [overflow, setOverflow] = useState(false);
   const anchorRef = useRef<PerformanceAnchor | null>(null);
@@ -33,6 +34,19 @@ export function InstrumentsPanel() {
   const routePromiseRef = useRef<Promise<void> | null>(null);
   const drumsRoutedRef = useRef(false);
   const keysRoutedRef = useRef(false);
+
+  useEffect(() => {
+    let alive = true;
+    const legacy = Boolean(localStorage.getItem('loop-pocket-pad-hint'));
+    void loadMeta<boolean>('pad-hint-seen').then(async (seen) => {
+      if (legacy) {
+        await saveMeta('pad-hint-seen', true);
+        localStorage.removeItem('loop-pocket-pad-hint');
+      }
+      if (alive) setShowHint(!(legacy || seen));
+    }).catch(() => { if (alive) setShowHint(!legacy); });
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -72,8 +86,7 @@ export function InstrumentsPanel() {
   }
 
   function rememberHint(): void {
-    if (!showHint) return;
-    localStorage.setItem('loop-pocket-pad-hint', '1');
+    void saveMeta('pad-hint-seen', true).catch(() => undefined);
     setShowHint(false);
   }
 

@@ -4,6 +4,7 @@ import { collectOrphanAudio, deleteProject as deleteProjectFromDb, loadProjects,
 import { requestPersistenceAfterMeaningfulAction } from '../storage/persistence';
 import type { Clip, EffectSettings, LoopGenre, Project, Track, TrackType } from '../types/project';
 import { createId } from '../utils/ids';
+import { markEightBarComplete } from '../analytics/funnel';
 import { trackColors } from '../utils/music';
 
 const defaultEffects = (): EffectSettings => ({
@@ -131,6 +132,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           selectedTrackId: saved[0].tracks[0]?.id ?? null,
           selectedClipId: null,
         });
+        markEightBarComplete(saved[0]);
       }
     } catch {
       set({ saveStatus: 'error' });
@@ -160,6 +162,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       saveStatus: 'idle',
     }));
     void get().saveNow();
+    markEightBarComplete(project);
     if (hadProject) void requestPersistenceAfterMeaningfulAction().catch(() => undefined);
     return project;
   },
@@ -361,4 +364,5 @@ function mutateProject(
     future: withHistory ? [] : state.future,
     saveStatus: 'idle',
   });
+  markEightBarComplete(next);
 }

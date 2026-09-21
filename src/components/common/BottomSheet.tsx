@@ -1,12 +1,14 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { IconButton } from './IconButton';
+import { consumeSheetHistory } from './sheetHistory';
 
 type BottomSheetProps = {
   open: boolean;
   title: string;
   children: ReactNode;
   onClose: () => void;
+  canClose?: boolean;
   height?: 'half' | 'tall' | 'full';
 };
 
@@ -16,11 +18,13 @@ const heights = {
   full: 'max-h-[92dvh]',
 };
 
-export function BottomSheet({ open, title, children, onClose, height = 'tall' }: BottomSheetProps) {
+export function BottomSheet({ open, title, children, onClose, canClose = true, height = 'tall' }: BottomSheetProps) {
   const onCloseRef = useRef(onClose);
+  const canCloseRef = useRef(canClose);
   const entryRef = useRef<string | null>(null);
   const closingRef = useRef(false);
   onCloseRef.current = onClose;
+  canCloseRef.current = canClose;
 
   useEffect(() => {
     if (!open) return;
@@ -30,15 +34,21 @@ export function BottomSheet({ open, title, children, onClose, height = 'tall' }:
     }
     entryRef.current = id;
     const onPop = () => {
-      if (window.history.state?.loopPocketSheet !== id && !closingRef.current) onCloseRef.current();
+      if (window.history.state?.loopPocketSheet === id || closingRef.current) return;
+      if (!canCloseRef.current) {
+        window.history.pushState({ ...window.history.state, loopPocketSheet: id }, '', window.location.href);
+        return;
+      }
+      onCloseRef.current();
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, [open]);
 
   function close() {
+    if (!canCloseRef.current) return;
     closingRef.current = true;
-    if (entryRef.current && window.history.state?.loopPocketSheet === entryRef.current) window.history.back();
+    if (entryRef.current && window.history.state?.loopPocketSheet === entryRef.current) consumeSheetHistory();
     entryRef.current = null;
     onClose();
   }

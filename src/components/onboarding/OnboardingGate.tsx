@@ -1,6 +1,8 @@
 import type { LoopGenre } from '../../types/project';
 import { useProjectStore } from '../../stores/projectStore';
 import { useUiStore } from '../../stores/uiStore';
+import { useEffect } from 'react';
+import { mark } from '../../analytics/funnel';
 
 type OnboardingGateProps = {
   onDone: () => void;
@@ -17,11 +19,15 @@ export function OnboardingGate({ onDone }: OnboardingGateProps) {
   const setOpen = useUiStore((state) => state.setOnboardingOpen);
   const createProject = useProjectStore((state) => state.createProject);
 
+  useEffect(() => {
+    if (open) mark('onboarding_shown');
+  }, [open]);
+
   if (!open) return null;
 
   function choose(genre: LoopGenre) {
     createProject(genre);
-    localStorage.setItem('loop-pocket-onboarding-start', String(Date.now()));
+    mark('genre_selected', { genre });
     setOpen(false);
     onDone();
   }

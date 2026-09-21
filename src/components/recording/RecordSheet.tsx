@@ -9,6 +9,7 @@ import { useProjectStore } from '../../stores/projectStore';
 import { requestPersistenceAfterMeaningfulAction } from '../../storage/persistence';
 import { createId } from '../../utils/ids';
 import { BottomSheet } from '../common/BottomSheet';
+import { mark } from '../../analytics/funnel';
 
 type RecordSheetProps = {
   open: boolean;
@@ -94,6 +95,7 @@ export function RecordSheet({ open, onClose, onToast }: RecordSheetProps) {
           name: '새 녹음',
           source: { kind: 'recording', audioId: result.audioId, offsetSec: placement.offsetSec },
         });
+        mark('first_recording');
         const project = useProjectStore.getState().currentProject;
         if (placement.startBar + placement.lengthBars > project.loopLengthBars) {
           setOverflow(true);

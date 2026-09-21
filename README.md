@@ -8,6 +8,7 @@
 npm install
 npm run generate:loops
 npm run generate:kit
+npm run generate:icons
 npm run dev -- --host
 ```
 
@@ -16,8 +17,11 @@ npm run dev -- --host
 
 ## 개발 점검 페이지
 
-- `/dev/tokens`: 디자인 토큰 확인
-- `/dev/audio`: Tone.js 엔진, 메트로놈, WAV/FLAC 샘플 정렬 점검
+- `#/dev/tokens`: 디자인 토큰 확인
+- `#/dev/audio`: Tone.js 엔진, 메트로놈, WAV/FLAC 샘플 정렬 점검
+- `#/dev/funnel`: 로컬 30초/3분 퍼널 계측 확인 및 초기화
+
+개발 점검 경로는 개발 서버에서만 활성화됩니다. 홈은 `#/`, 스튜디오는 `#/studio`입니다.
 
 ## 포함된 범위
 
@@ -30,9 +34,13 @@ npm run dev -- --host
 - 소리별 템포 변환(음정 악기는 그레인, 드럼은 슬라이스)과 실시간 미터
 - 44.1kHz 스테레오 16패드 드럼킷, 즉시 연주, 원본 시각을 보존하는 퀀타이즈
 - FLAC 우선/WAV 폴백. PWA 설치 시 스타터 루프 6개만 사전 캐시하고 나머지는 필요할 때 받음
+- 저장 스키마 마이그레이션, 미사용 녹음 정리, 저장 공간 상태와 영속성 요청
+- 재생 중 Wake Lock, 오디오 인터럽션 복구, 설치용 PNG 아이콘
+- IndexedDB에만 저장되는 로컬 사용 흐름 계측
 
 ## 알려진 한계
 
 - 루프는 합성 CC0 에셋입니다. 오프라인에서는 미리 받은 루프와 스타터 루프만 사용할 수 있습니다.
 - iOS Safari/Android Chrome의 FLAC 샘플 정렬, 저사양 기기의 8트랙 성능과 마이크 지연은 실기기 검증이 필요합니다.
 - 네이티브 저지연 마이크 모니터링은 브라우저와 기기 제약을 받습니다.
+- iOS 무음 스위치/Audio Session API와 Android 뒤로가기, Wake Lock은 실기기 확인 전까지 안내/복구 경로로 대응합니다. 자세한 내용은 `docs/platform-verification.md`와 `docs/ux-metrics.md`를 참조하세요.
