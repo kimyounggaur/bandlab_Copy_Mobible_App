@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "format": "prettier --write .",
-    "generate:loops": "node scripts/generate-loops.mjs"
+    "generate:loops": "node scripts/generate-loops.mjs",
+    "generate:kit": "node scripts/generate-kit.mjs"
   },
   "dependencies": {
     "idb": "^8.0.3",

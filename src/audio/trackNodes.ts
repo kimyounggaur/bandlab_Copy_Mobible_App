@@ -2,6 +2,8 @@ import * as Tone from 'tone';
 import { audioEngine } from './engine';
 import { getLoopBuffer, getBufferFromBlob, peekBlobBuffer, peekLoopBuffer } from './bufferCache';
 import { applyTrackSettings, buildRenderGraph, type TrackNode } from './renderGraph';
+import { createDrumKit, createKeys, preloadDrumKit, type Instrument } from './instruments';
+import { noteTimeInTicks } from './quantize';
 import { pickStretchMode, type StretchMode } from './stretch';
 import { getLoop } from '../data/loopManifest';
 import { loadAudioBlob } from '../storage/db';
@@ -19,6 +21,7 @@ type ClipSchedule = {
   grain?: Tone.GrainPlayer;
   grainGain?: Tone.Gain;
   part?: Tone.Part;
+  instrument?: Instrument;
 };
 
 class TrackScheduler {
@@ -67,13 +70,18 @@ class TrackScheduler {
           this.clipStatus.set(clip.id, 'missing');
         }
       } else {
-        this.clipStatus.set(clip.id, 'ready');
+        try {
+          if (clip.source.instrument === 'drums') await preloadDrumKit();
+          this.clipStatus.set(clip.id, 'ready');
+        } catch {
+          this.clipStatus.set(clip.id, 'missing');
+        }
       }
     })));
     if (generation !== this.generation) return;
 
     this.removeMissingTracks(project);
-    for (const track of project.tracks) this.reconcileClips(track);
+    await Promise.all(project.tracks.map((track) => this.reconcileClips(track)));
     this.structureKey = structureKey;
   }
 
@@ -104,7 +112,7 @@ class TrackScheduler {
     audioEngine.applyProjectTransport(project);
   }
 
-  reconcileClips(track: Track): void {
+  async reconcileClips(track: Track): Promise<void> {
     const liveIds = new Set(track.clips.map((clip) => clip.id));
     for (const [clipId, schedule] of this.clips) {
       if (schedule.trackId === track.id && !liveIds.has(clipId)) {
@@ -120,7 +128,9 @@ class TrackScheduler {
       if (!node) continue;
       const schedule: ClipSchedule = { hash, trackId: track.id, events: [], active: new Set(), kind: clip.source.kind };
       if (clip.source.kind === 'notes') {
-        this.scheduleNotes(clip, node, schedule);
+        if (this.clipStatus.get(clip.id) === 'missing') continue;
+        // eslint-disable-next-line no-await-in-loop
+        await this.scheduleNotes(clip, node, schedule);
         this.clips.set(clip.id, schedule);
         continue;
       }
@@ -221,28 +231,19 @@ class TrackScheduler {
     schedule.events.push(eventId);
   }
 
-  private scheduleNotes(clip: Clip, node: TrackNode, schedule: ClipSchedule): void {
+  private async scheduleNotes(clip: Clip, node: TrackNode, schedule: ClipSchedule): Promise<void> {
     if (clip.source.kind !== 'notes') return;
-    const isDrums = clip.source.instrument === 'drums';
-    if (isDrums) {
-      node.drumTone ??= new Tone.MembraneSynth({ volume: -8 }).connect(node.eq);
-      node.drumNoise ??= new Tone.NoiseSynth({ volume: -12 }).connect(node.eq);
-    } else {
-      node.keys ??= new Tone.PolySynth({ voice: Tone.Synth, maxPolyphony: 8, options: { volume: -10 } }).connect(node.eq);
-    }
-    const notes = clip.source.notes.map((note) => ({
-      time: note.t,
+    const noteSource = clip.source;
+    const instrument = noteSource.instrument === 'drums' ? await createDrumKit('lofi') : createKeys('keys_soft');
+    instrument.connectTo(node.eq);
+    schedule.instrument = instrument;
+    const notes = noteSource.notes.map((note) => ({
+      time: noteTimeInTicks(note, noteSource.quantize, Tone.getTransport().PPQ),
       note: note.note,
-      dur: note.dur,
       velocity: note.velocity ?? 0.8,
     }));
     const part = new Tone.Part((time, note) => {
-      if (isDrums) {
-        if (note.note.toLowerCase().includes('snare')) node.drumNoise?.triggerAttackRelease(note.dur, time, note.velocity);
-        else node.drumTone?.triggerAttackRelease(note.note, note.dur, time, note.velocity);
-      } else {
-        node.keys?.triggerAttackRelease(note.note, note.dur, time, note.velocity);
-      }
+      instrument.trigger(note.note, time, note.velocity * clip.gain);
     }, notes).start(barsToTonePosition(clip.startBar));
     part.stop(barsToTonePosition(clip.startBar + clip.lengthBars));
     schedule.part = part;
@@ -266,6 +267,10 @@ class TrackScheduler {
       this.masterInput.connect(this.masterMeter);
     }
     return this.masterInput;
+  }
+
+  getTrackInput(trackId: string | null): Tone.ToneAudioNode {
+    return (trackId && this.nodes.get(trackId)?.eq) || this.getMasterInput();
   }
 
   getMasterLevel(): number {
@@ -334,6 +339,7 @@ class TrackScheduler {
       }, 20);
     }
     schedule.part?.dispose();
+    schedule.instrument?.dispose();
     this.clips.delete(clipId);
   }
 
@@ -344,9 +350,6 @@ class TrackScheduler {
     node.reverb.dispose();
     node.channel.dispose();
     node.meter.dispose();
-    node.keys?.dispose();
-    node.drumTone?.dispose();
-    node.drumNoise?.dispose();
   }
 
   private clipHash(clip: Clip): string {

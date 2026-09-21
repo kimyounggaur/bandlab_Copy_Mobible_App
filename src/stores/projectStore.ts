@@ -56,7 +56,7 @@ export function createStarterProject(genre: LoopGenre = 'hiphop'): Project {
 
   const bpmByGenre: Record<LoopGenre, number> = { hiphop: 90, pop: 104, edm: 124 };
   return {
-    version: 2,
+    version: 3,
     id: createId('project'),
     name: `${genre === 'hiphop' ? '힙합' : genre === 'pop' ? '팝' : 'EDM'} 스케치`,
     createdAt: now,

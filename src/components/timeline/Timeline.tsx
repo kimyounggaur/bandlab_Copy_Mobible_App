@@ -358,6 +358,23 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
                 />
               </label>
             )}
+            {clip.source.kind === 'notes' && (
+              <label className="mt-4 flex items-center justify-between gap-3 text-body text-studio-muted">
+                박자 자동 맞추기
+                <select
+                  value={clip.source.quantize}
+                  onChange={(event) => {
+                    if (clip.source.kind !== 'notes') return;
+                    updateClip(track.id, clip.id, {
+                      source: { ...clip.source, quantize: event.target.value as 'off' | '8n' | '16n' },
+                    });
+                  }}
+                  className="min-h-11 rounded-studio border border-studio-border bg-studio-card px-3 text-studio-text"
+                >
+                  <option value="off">끄기</option><option value="8n">1/8</option><option value="16n">1/16</option>
+                </select>
+              </label>
+            )}
             <div className="mt-4 grid grid-cols-2 gap-2">
               <IconButton
                 label="클립 복제"

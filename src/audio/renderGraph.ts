@@ -1,5 +1,7 @@
 import * as Tone from 'tone';
 import { getLoop } from '../data/loopManifest';
+import { createDrumKit, createKeys } from './instruments';
+import { noteTimeInTicks } from './quantize';
 import { pickStretchMode } from './stretch';
 import type { Clip, Project, Track } from '../types/project';
 import { barsToSeconds, barsToTonePosition, volumeToDb } from '../utils/music';
@@ -11,9 +13,6 @@ export type TrackNode = {
   eq: Tone.EQ3;
   compressor: Tone.Compressor;
   meter: Tone.Meter;
-  keys?: Tone.PolySynth;
-  drumTone?: Tone.MembraneSynth;
-  drumNoise?: Tone.NoiseSynth;
 };
 
 type GraphOptions = {
@@ -48,11 +47,11 @@ export async function buildRenderGraph(
   if (options.schedule !== false) {
     ctx.transport.bpm.value = project.bpm;
     ctx.transport.PPQ = 192;
-    for (const track of project.tracks) {
+    await Promise.all(project.tracks.map(async (track) => {
       const node = nodes.get(track.id);
-      if (!node) continue;
-      for (const clip of track.clips) scheduleOfflineClip(clip, node, project, ctx, buffers);
-    }
+      if (!node) return;
+      await Promise.all(track.clips.map((clip) => scheduleOfflineClip(clip, node, project, ctx, buffers)));
+    }));
     ctx.transport.start(0);
   }
   return { limiter, masterInput, nodes };
@@ -74,30 +73,26 @@ export function applyTrackSettings(track: Track, node: TrackNode, hasSolo: boole
   node.compressor.ratio.value = track.effects.vocalPreset ? 4 : 1;
 }
 
-function scheduleOfflineClip(
+async function scheduleOfflineClip(
   clip: Clip,
   node: TrackNode,
   project: Project,
   ctx: Tone.BaseContext,
   buffers: Map<string, Tone.ToneAudioBuffer>,
-): void {
+): Promise<void> {
   const transport = ctx.transport;
   if (clip.source.kind === 'notes') {
-    const isDrums = clip.source.instrument === 'drums';
-    if (isDrums) {
-      node.drumTone ??= new Tone.MembraneSynth({ volume: -8 }).connect(node.eq);
-      node.drumNoise ??= new Tone.NoiseSynth({ volume: -12 }).connect(node.eq);
-    } else {
-      node.keys ??= new Tone.PolySynth({ voice: Tone.Synth, maxPolyphony: 8, options: { volume: -10 } }).connect(node.eq);
-    }
-    const events = clip.source.notes.map((note) => ({ time: note.t, note: note.note, dur: note.dur, velocity: note.velocity ?? 0.8 }));
+    const noteSource = clip.source;
+    const instrument = noteSource.instrument === 'drums'
+      ? await createDrumKit('lofi', ctx)
+      : createKeys('keys_soft', ctx);
+    instrument.connectTo(node.eq);
+    const events = noteSource.notes.map((note) => ({
+      time: noteTimeInTicks(note, noteSource.quantize, ctx.transport.PPQ),
+      note: note.note, velocity: note.velocity ?? 0.8,
+    }));
     new Tone.Part((time, note) => {
-      if (isDrums) {
-        if (note.note.toLowerCase().includes('snare')) node.drumNoise?.triggerAttackRelease(note.dur, time, note.velocity);
-        else node.drumTone?.triggerAttackRelease(note.note, note.dur, time, note.velocity);
-      } else {
-        node.keys?.triggerAttackRelease(note.note, note.dur, time, note.velocity);
-      }
+      instrument.trigger(note.note, time, note.velocity * clip.gain);
     }, events).start(barsToTonePosition(clip.startBar)).stop(barsToTonePosition(clip.startBar + clip.lengthBars));
     return;
   }

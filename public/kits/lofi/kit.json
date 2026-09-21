@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "id": "lofi",
+  "sampleRate": 44100,
+  "channels": 2,
+  "pads": [
+    {
+      "id": "kick",
+      "label": "킥",
+      "file": "/kits/lofi/kick.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    },
+    {
+      "id": "snare",
+      "label": "스네어",
+      "file": "/kits/lofi/snare.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    },
+    {
+      "id": "clap",
+      "label": "클랩",
+      "file": "/kits/lofi/clap.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    },
+    {
+      "id": "hat",
+      "label": "하이햇",
+      "file": "/kits/lofi/hat.wav",
+      "defaultVelocity": 0.8,
+      "choke": "hat"
+    },
+    {
+      "id": "tom",
+      "label": "탐",
+      "file": "/kits/lofi/tom.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    },
+    {
+      "id": "perc",
+      "label": "퍼크",
+      "file": "/kits/lofi/perc.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    },
+    {
+      "id": "rim",
+      "label": "림",
+      "file": "/kits/lofi/rim.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    },
+    {
+      "id": "openhat",
+      "label": "오픈햇",
+      "file": "/kits/lofi/openhat.wav",
+      "defaultVelocity": 0.8,
+      "choke": "hat"
+    },
+    {
+      "id": "sub808",
+      "label": "808",
+      "file": "/kits/lofi/sub808.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    },
+    {
+      "id": "snap",
+      "label": "스냅",
+      "file": "/kits/lofi/snap.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    },
+    {
+      "id": "shaker",
+      "label": "쉐이커",
+      "file": "/kits/lofi/shaker.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    },
+    {
+      "id": "crash",
+      "label": "크래시",
+      "file": "/kits/lofi/crash.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    },
+    {
+      "id": "lowtom",
+      "label": "로우탐",
+      "file": "/kits/lofi/lowtom.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    },
+    {
+      "id": "hitom",
+      "label": "하이탐",
+      "file": "/kits/lofi/hitom.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    },
+    {
+      "id": "bell",
+      "label": "벨",
+      "file": "/kits/lofi/bell.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    },
+    {
+      "id": "noise",
+      "label": "노이즈",
+      "file": "/kits/lofi/noise.wav",
+      "defaultVelocity": 0.8,
+      "choke": null
+    }
+  ]
+}

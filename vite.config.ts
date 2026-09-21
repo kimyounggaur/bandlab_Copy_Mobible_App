@@ -52,7 +52,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg}'],
         additionalManifestEntries: starterEntries,
         runtimeCaching: [{
-          urlPattern: /\/loops\/.*\.(flac|opus|wav)$/,
+          urlPattern: /\/(loops|kits)\/.*\.(flac|opus|wav)$/,
           handler: 'CacheFirst',
           options: {
             cacheName: 'loop-audio-v1',

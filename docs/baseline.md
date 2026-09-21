@@ -41,3 +41,14 @@ Measured at commit `324d578` before the R0 source changes.
 | Mobile-size recording sheet layout | Inspected at 390 x 844 |
 | Headless browser microphone | No device; recording returned an error |
 | Wired/Bluetooth clap alignment, live monitoring and feedback cutoff | Not measured on physical devices |
+
+## M3 instruments (2026-09-21)
+
+| Metric | Result |
+|---|---:|
+| 44.1kHz stereo one-shot kit | 16 distinct WAV files, 1,267,256 bytes |
+| Pad Web Audio source creation | Confirmed in desktop Chromium |
+| Drum and keys performance clip creation and playback | Passed in desktop Chromium |
+| Raw note position survives quantize off | Confirmed in IndexedDB |
+| Note-inclusive WAV export | Completed in desktop Chromium |
+| Wired/speaker tap-to-sound latency and rapid tapping | Not measured on physical devices |

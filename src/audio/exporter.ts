@@ -1,6 +1,7 @@
 import * as Tone from 'tone';
 import { getLoopBuffer, getBufferFromBlob } from './bufferCache';
 import { buildRenderGraph } from './renderGraph';
+import { preloadDrumKit } from './instruments';
 import { getLoop } from '../data/loopManifest';
 import { loadAudioBlob } from '../storage/db';
 import type { Project } from '../types/project';
@@ -19,6 +20,9 @@ export async function exportProjectWav(project: Project, options: ExportOptions 
   const duration = barsToSeconds(project.loopLengthBars, project.bpm) + (options.tailSeconds ?? 2);
   const buffers = new Map<string, Tone.ToneAudioBuffer>();
   const clips = project.tracks.flatMap((track) => track.clips);
+  if (clips.some((clip) => clip.source.kind === 'notes' && clip.source.instrument === 'drums')) {
+    await preloadDrumKit();
+  }
   await Promise.all(clips.map(async (clip) => {
     if (clip.source.kind === 'loop') {
       const loop = getLoop(clip.source.loopId);

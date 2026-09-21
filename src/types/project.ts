@@ -8,6 +8,7 @@ export type ClipSource =
       kind: 'notes';
       instrument: 'drums' | 'keys_soft';
       notes: NoteEvent[];
+      quantize: 'off' | '8n' | '16n';
     };
 
 export type EffectSettings = {
@@ -22,6 +23,7 @@ export type NoteEvent = {
   note: string;
   dur: string;
   velocity?: number;
+  rawBar?: number;
 };
 
 export type Clip = {
@@ -50,7 +52,7 @@ export type Track = {
 };
 
 export type Project = {
-  version: 2;
+  version: 3;
   id: string;
   name: string;
   createdAt: number;

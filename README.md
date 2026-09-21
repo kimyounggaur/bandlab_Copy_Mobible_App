@@ -7,6 +7,7 @@
 ```bash
 npm install
 npm run generate:loops
+npm run generate:kit
 npm run dev -- --host
 ```
 
@@ -27,6 +28,7 @@ npm run dev -- --host
 - 루프 라이브러리, 타임라인, 악기 패드, 믹서, 원노브 이펙트
 - IndexedDB 자동저장과 실제 오프라인 렌더 기반 WAV 내보내기
 - 소리별 템포 변환(음정 악기는 그레인, 드럼은 슬라이스)과 실시간 미터
+- 44.1kHz 스테레오 16패드 드럼킷, 즉시 연주, 원본 시각을 보존하는 퀀타이즈
 - FLAC 우선/WAV 폴백. PWA 설치 시 스타터 루프 6개만 사전 캐시하고 나머지는 필요할 때 받음
 
 ## 알려진 한계

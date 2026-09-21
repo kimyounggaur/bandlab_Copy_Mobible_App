@@ -40,10 +40,19 @@ export async function loadProjects() {
 
 export function migrateProject(project: Project): Project {
   const stored = project as Project & { version: number; masterVolume?: number };
-  if (stored.version < 2 || typeof stored.masterVolume !== 'number') {
-    return { ...stored, version: 2, masterVolume: 80 };
-  }
-  return project;
+  if (stored.version >= 3 && typeof stored.masterVolume === 'number') return project;
+  return {
+    ...stored,
+    version: 3,
+    masterVolume: typeof stored.masterVolume === 'number' ? stored.masterVolume : 80,
+    // eslint-disable-next-line oxc/no-map-spread
+    tracks: stored.tracks.map((track) => ({
+      ...track,
+      clips: track.clips.map((clip) => clip.source.kind === 'notes'
+        ? { ...clip, source: { ...clip.source, quantize: clip.source.quantize ?? 'off' } }
+        : clip),
+    })),
+  };
 }
 
 export async function deleteProject(projectId: string) {
