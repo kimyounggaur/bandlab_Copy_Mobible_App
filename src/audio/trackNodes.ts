@@ -1,22 +1,11 @@
 import * as Tone from 'tone';
 import { audioEngine } from './engine';
 import { getBuffer, getBufferFromBlob, peekBlobBuffer, peekBuffer } from './bufferCache';
+import { applyTrackSettings, buildRenderGraph, type TrackNode } from './renderGraph';
 import { getLoop } from '../data/loopManifest';
 import { loadAudioBlob } from '../storage/db';
 import type { Clip, Project, Track } from '../types/project';
-import { barsToSeconds, barsToTonePosition, volumeToDb } from '../utils/music';
-
-type TrackNode = {
-  channel: Tone.Channel;
-  delay: Tone.FeedbackDelay;
-  reverb: Tone.Reverb;
-  eq: Tone.EQ3;
-  compressor: Tone.Compressor;
-  meter: Tone.Meter;
-  keys?: Tone.PolySynth;
-  drumTone?: Tone.MembraneSynth;
-  drumNoise?: Tone.NoiseSynth;
-};
+import { barsToSeconds, barsToTonePosition } from '../utils/music';
 
 type ClipSchedule = {
   hash: string;
@@ -34,11 +23,12 @@ class TrackScheduler {
   private generation = 0;
   private structureKey = '';
   private bpm = 90;
+  private nodeBuild: Promise<void> | null = null;
   private clipStatus = new Map<string, 'missing' | 'loading' | 'ready'>();
 
   async syncProject(project: Project): Promise<void> {
     this.applyTransport(project);
-    this.ensureNodes(project);
+    await this.ensureNodes(project);
     this.applyTrackParams(project);
 
     const structureKey = JSON.stringify(project.tracks.map((track) => [track.id, track.clips.map((clip) => this.clipHash(clip))]));
@@ -77,10 +67,7 @@ class TrackScheduler {
     for (const track of project.tracks) {
       const node = this.nodes.get(track.id);
       if (!node) continue;
-      node.channel.volume.rampTo(volumeToDb(track.volume), 0.02);
-      node.channel.pan.rampTo(track.pan, 0.02);
-      node.channel.mute = track.mute || (hasSolo && !track.solo);
-      this.applyEffects(track, node);
+      applyTrackSettings(track, node, hasSolo);
     }
   }
 
@@ -229,18 +216,21 @@ class TrackScheduler {
     this.structureKey = '';
   }
 
-  private ensureNodes(project: Project): void {
-    for (const track of project.tracks) {
-      if (this.nodes.has(track.id)) continue;
-      const eq = new Tone.EQ3({ low: 0, mid: 0, high: 0 });
-      const compressor = new Tone.Compressor({ threshold: -18, ratio: 3, attack: 0.01, release: 0.12 });
-      const delay = new Tone.FeedbackDelay({ delayTime: '8n', feedback: 0.25, wet: 0 });
-      const reverb = new Tone.Reverb({ decay: 1.2, wet: 0 });
-      const channel = new Tone.Channel({ volume: volumeToDb(track.volume), pan: track.pan });
-      const meter = new Tone.Meter({ normalRange: true });
-      eq.chain(compressor, delay, reverb, channel, this.getMasterInput());
-      channel.connect(meter);
-      this.nodes.set(track.id, { channel, delay, reverb, eq, compressor, meter });
+  private async ensureNodes(project: Project): Promise<void> {
+    if (this.nodeBuild) await this.nodeBuild;
+    const missing = project.tracks.filter((track) => !this.nodes.has(track.id));
+    if (!missing.length) return;
+    const build = buildRenderGraph(
+      { ...project, tracks: missing }, Tone.getContext(), new Map(),
+      { limiter: this.getMasterInput(), schedule: false },
+    ).then((graph) => {
+      for (const [trackId, node] of graph.nodes) this.nodes.set(trackId, node);
+    });
+    this.nodeBuild = build;
+    try {
+      await build;
+    } finally {
+      if (this.nodeBuild === build) this.nodeBuild = null;
     }
   }
 
@@ -275,19 +265,6 @@ class TrackScheduler {
     node.keys?.dispose();
     node.drumTone?.dispose();
     node.drumNoise?.dispose();
-  }
-
-  private applyEffects(track: Track, node: TrackNode): void {
-    node.reverb.wet.rampTo(track.effects.reverb.on ? track.effects.reverb.amount / 200 : 0, 0.02);
-    if (node.reverb.decay !== (track.effects.reverb.mode === 'hall' ? 2.8 : 1.1)) {
-      node.reverb.decay = track.effects.reverb.mode === 'hall' ? 2.8 : 1.1;
-    }
-    node.delay.wet.rampTo(track.effects.delay.on ? track.effects.delay.amount / 250 : 0, 0.02);
-    node.delay.delayTime.value = track.effects.delay.sync;
-    const tilt = track.effects.tone.on ? track.effects.tone.tilt - 50 : 0;
-    node.eq.high.rampTo(tilt / 8, 0.02);
-    node.eq.low.rampTo(track.effects.tone.bassBoost ? 3 : -tilt / 12, 0.02);
-    node.compressor.ratio.value = track.effects.vocalPreset ? 4 : 1;
   }
 
   private clipHash(clip: Clip): string {
