@@ -61,10 +61,18 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const state = audioEngine.getState();
-    if (!state.initialized) return;
-    void trackScheduler.syncProject(project);
-  }, [project]);
+    const sync = () => {
+      if (audioEngine.getState().initialized) void trackScheduler.syncProject(useProjectStore.getState().currentProject);
+    };
+    const unsubscribeProject = useProjectStore.subscribe((state, previous) => {
+      if (state.currentProject !== previous.currentProject) sync();
+    });
+    const unsubscribeEngine = audioEngine.subscribe(sync);
+    return () => {
+      unsubscribeProject();
+      unsubscribeEngine();
+    };
+  }, []);
 
   useEffect(() => {
     if (!toast) return;

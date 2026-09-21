@@ -1,7 +1,9 @@
 import { Headphones, Plus } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as Tone from 'tone';
 import { audioEngine } from '../../audio/engine';
+import { getBuffer } from '../../audio/bufferCache';
+import { trackScheduler } from '../../audio/trackNodes';
 import { getLoop, loopManifest } from '../../data/loopManifest';
 import { useProjectStore } from '../../stores/projectStore';
 import { useUiStore } from '../../stores/uiStore';
@@ -37,6 +39,11 @@ export function LoopLibrarySheet({ playheadBar, onToast }: LoopLibrarySheetProps
   const [category, setCategory] = useState<LoopCategory | 'all'>('all');
   const [genre, setGenre] = useState<LoopGenre | 'all'>('all');
   const [previewingId, setPreviewingId] = useState<string | null>(null);
+  const previewSource = useRef<Tone.ToneBufferSource | null>(null);
+
+  useEffect(() => () => {
+    previewSource.current?.stop(Tone.immediate() + 0.005);
+  }, []);
 
   const loops = useMemo(
     () =>
@@ -48,20 +55,32 @@ export function LoopLibrarySheet({ playheadBar, onToast }: LoopLibrarySheetProps
 
   async function preview(loopId: string) {
     await audioEngine.ensureReady();
-    setPreviewingId((current) => (current === loopId ? null : loopId));
+    if (previewSource.current) {
+      previewSource.current.stop(Tone.immediate() + 0.005);
+      previewSource.current = null;
+      if (previewingId === loopId) {
+        setPreviewingId(null);
+        return;
+      }
+    }
     const loop = getLoop(loopId);
     if (!loop) return;
-    const player = new Tone.Player({ url: loop.filePath, fadeIn: 0.01, fadeOut: 0.02 }).toDestination();
-    await Tone.loaded();
-    player.playbackRate = useProjectStore.getState().currentProject.bpm / 90;
-    const nextBar = Math.ceil(audioEngine.getPositionInBars());
-    const eventId = Tone.Transport.scheduleOnce((time) => {
-      player.start(time);
-      Tone.Transport.clear(eventId);
-      window.setTimeout(() => player.dispose(), loop.bars * 4 * 700);
-    }, barsToTonePosition(nextBar));
-    onToast('다음 마디에 맞춰 미리듣기를 시작해요');
-    audioEngine.play();
+    try {
+      const buffer = await getBuffer(loop.filePath);
+      const source = new Tone.ToneBufferSource({ url: buffer, fadeIn: 0.01, fadeOut: 0.02, playbackRate: useProjectStore.getState().currentProject.bpm / 90 }).connect(trackScheduler.getMasterInput());
+      source.onended = () => {
+        if (previewSource.current === source) {
+          previewSource.current = null;
+          setPreviewingId(null);
+        }
+        source.dispose();
+      };
+      previewSource.current = source;
+      setPreviewingId(loopId);
+      source.start(Tone.immediate());
+    } catch {
+      onToast('미리듣기를 불러오지 못했어요');
+    }
   }
 
   function add(loopId: string) {
@@ -108,14 +127,6 @@ export function LoopLibrarySheet({ playheadBar, onToast }: LoopLibrarySheetProps
       </div>
     </BottomSheet>
   );
-}
-
-function barsToTonePosition(positionBars: number) {
-  const bar = Math.floor(positionBars);
-  const beatFloat = (positionBars - bar) * 4;
-  const beat = Math.floor(beatFloat);
-  const sixteenth = Math.round((beatFloat - beat) * 4);
-  return `${bar}:${beat}:${sixteenth}`;
 }
 
 type FilterRowProps<T extends string> = {
