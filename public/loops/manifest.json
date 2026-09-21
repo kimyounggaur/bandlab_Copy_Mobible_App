@@ -1,0 +1,1373 @@
+{
+  "version": 1,
+  "loops": [
+    {
+      "id": "drums_01",
+      "name": "단단한 드럼",
+      "category": "drums",
+      "genre": "hiphop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_01.wav"
+      },
+      "hash": "1c0e98d0381c",
+      "starter": true,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2
+      ],
+      "hatStep": 0.5
+    },
+    {
+      "id": "drums_02",
+      "name": "단단한 드럼",
+      "category": "drums",
+      "genre": "hiphop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_02.wav"
+      },
+      "hash": "2b20c1da6b24",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2
+      ],
+      "hatStep": 0.5
+    },
+    {
+      "id": "drums_03",
+      "name": "경쾌한 드럼",
+      "category": "drums",
+      "genre": "pop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_03.wav"
+      },
+      "hash": "40f0bd52ec7b",
+      "starter": true,
+      "mood": "경쾌한",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2.5
+      ],
+      "hatStep": 0.5
+    },
+    {
+      "id": "drums_04",
+      "name": "빠른 드럼",
+      "category": "drums",
+      "genre": "edm",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_04.wav"
+      },
+      "hash": "078e57f4182f",
+      "starter": true,
+      "mood": "빠른",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2
+      ],
+      "hatStep": 0.25
+    },
+    {
+      "id": "drums_05",
+      "name": "단단한 드럼",
+      "category": "drums",
+      "genre": "hiphop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_05.wav"
+      },
+      "hash": "36d08e8bc084",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2
+      ],
+      "hatStep": 0.5
+    },
+    {
+      "id": "drums_06",
+      "name": "경쾌한 드럼",
+      "category": "drums",
+      "genre": "pop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_06.wav"
+      },
+      "hash": "f8c5e4f6f77c",
+      "starter": false,
+      "mood": "경쾌한",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2.5
+      ],
+      "hatStep": 0.5
+    },
+    {
+      "id": "drums_07",
+      "name": "단단한 드럼",
+      "category": "drums",
+      "genre": "hiphop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_07.wav"
+      },
+      "hash": "21a73443e3fb",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2
+      ],
+      "hatStep": 0.5
+    },
+    {
+      "id": "drums_08",
+      "name": "빠른 드럼",
+      "category": "drums",
+      "genre": "edm",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_08.wav"
+      },
+      "hash": "0748e5698e56",
+      "starter": false,
+      "mood": "빠른",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2
+      ],
+      "hatStep": 0.25
+    },
+    {
+      "id": "drums_09",
+      "name": "경쾌한 드럼",
+      "category": "drums",
+      "genre": "pop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_09.wav"
+      },
+      "hash": "bf4fa465018e",
+      "starter": false,
+      "mood": "경쾌한",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2.5
+      ],
+      "hatStep": 0.5
+    },
+    {
+      "id": "drums_10",
+      "name": "단단한 드럼",
+      "category": "drums",
+      "genre": "hiphop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_10.wav"
+      },
+      "hash": "2461fc5166e0",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2
+      ],
+      "hatStep": 0.5
+    },
+    {
+      "id": "drums_11",
+      "name": "단단한 드럼",
+      "category": "drums",
+      "genre": "hiphop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_11.wav"
+      },
+      "hash": "1eb2c6ae3c46",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2
+      ],
+      "hatStep": 0.5
+    },
+    {
+      "id": "drums_12",
+      "name": "빠른 드럼",
+      "category": "drums",
+      "genre": "edm",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_12.wav"
+      },
+      "hash": "4e3d3ec47d51",
+      "starter": false,
+      "mood": "빠른",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2.5
+      ],
+      "hatStep": 0.25
+    },
+    {
+      "id": "drums_13",
+      "name": "단단한 드럼",
+      "category": "drums",
+      "genre": "hiphop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_13.wav"
+      },
+      "hash": "39db0d6d4561",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2
+      ],
+      "hatStep": 0.5
+    },
+    {
+      "id": "drums_14",
+      "name": "단단한 드럼",
+      "category": "drums",
+      "genre": "hiphop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_14.wav"
+      },
+      "hash": "f92b0a6d69fb",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2
+      ],
+      "hatStep": 0.5
+    },
+    {
+      "id": "drums_15",
+      "name": "경쾌한 드럼",
+      "category": "drums",
+      "genre": "pop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_15.wav"
+      },
+      "hash": "53a9dfdd61fd",
+      "starter": false,
+      "mood": "경쾌한",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2.5
+      ],
+      "hatStep": 0.5
+    },
+    {
+      "id": "drums_16",
+      "name": "빠른 드럼",
+      "category": "drums",
+      "genre": "edm",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/drums_16.wav"
+      },
+      "hash": "954ed1624b48",
+      "starter": false,
+      "mood": "빠른",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": [
+        0,
+        2
+      ],
+      "hatStep": 0.25
+    },
+    {
+      "id": "bass_01",
+      "name": "A마이너 단단한 베이스",
+      "category": "bass",
+      "genre": "hiphop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/bass_01.wav"
+      },
+      "hash": "5ad2797df791",
+      "starter": true,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": 55,
+      "semitones": [
+        0,
+        0,
+        3,
+        5,
+        7,
+        5,
+        3,
+        0
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "bass_02",
+      "name": "A마이너 단단한 베이스",
+      "category": "bass",
+      "genre": "hiphop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/bass_02.wav"
+      },
+      "hash": "0460e3a46fe3",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": 55,
+      "semitones": [
+        0,
+        0,
+        3,
+        5,
+        7,
+        5,
+        3,
+        0
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "bass_03",
+      "name": "A마이너 경쾌한 베이스",
+      "category": "bass",
+      "genre": "pop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/bass_03.wav"
+      },
+      "hash": "ce13e1c1fa34",
+      "starter": true,
+      "mood": "경쾌한",
+      "license": "CC0-generated",
+      "rootHz": 55,
+      "semitones": [
+        0,
+        0,
+        3,
+        5,
+        7,
+        5,
+        3,
+        0
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "bass_04",
+      "name": "A마이너 빠른 베이스",
+      "category": "bass",
+      "genre": "edm",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/bass_04.wav"
+      },
+      "hash": "a0af5a1cb95a",
+      "starter": true,
+      "mood": "빠른",
+      "license": "CC0-generated",
+      "rootHz": 55,
+      "semitones": [
+        0,
+        0,
+        3,
+        5,
+        7,
+        5,
+        3,
+        0
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "bass_05",
+      "name": "A마이너 단단한 베이스",
+      "category": "bass",
+      "genre": "hiphop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/bass_05.wav"
+      },
+      "hash": "eda7360edcc0",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": 55,
+      "semitones": [
+        0,
+        0,
+        3,
+        5,
+        7,
+        5,
+        3,
+        0
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "bass_06",
+      "name": "A마이너 경쾌한 베이스",
+      "category": "bass",
+      "genre": "pop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/bass_06.wav"
+      },
+      "hash": "1013345d69f7",
+      "starter": false,
+      "mood": "경쾌한",
+      "license": "CC0-generated",
+      "rootHz": 55,
+      "semitones": [
+        0,
+        0,
+        3,
+        5,
+        7,
+        5,
+        3,
+        0
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "bass_07",
+      "name": "A마이너 단단한 베이스",
+      "category": "bass",
+      "genre": "hiphop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/bass_07.wav"
+      },
+      "hash": "951ca92f924a",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": 55,
+      "semitones": [
+        0,
+        0,
+        3,
+        5,
+        7,
+        5,
+        3,
+        0
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "bass_08",
+      "name": "A마이너 빠른 베이스",
+      "category": "bass",
+      "genre": "edm",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/bass_08.wav"
+      },
+      "hash": "91fc735048eb",
+      "starter": false,
+      "mood": "빠른",
+      "license": "CC0-generated",
+      "rootHz": 55,
+      "semitones": [
+        0,
+        0,
+        3,
+        5,
+        7,
+        5,
+        3,
+        0
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "bass_09",
+      "name": "A마이너 경쾌한 베이스",
+      "category": "bass",
+      "genre": "pop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/bass_09.wav"
+      },
+      "hash": "7ead785ece6f",
+      "starter": false,
+      "mood": "경쾌한",
+      "license": "CC0-generated",
+      "rootHz": 55,
+      "semitones": [
+        0,
+        0,
+        3,
+        5,
+        7,
+        5,
+        3,
+        0
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "bass_10",
+      "name": "A마이너 단단한 베이스",
+      "category": "bass",
+      "genre": "hiphop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/bass_10.wav"
+      },
+      "hash": "0460e3a46fe3",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": 55,
+      "semitones": [
+        0,
+        0,
+        3,
+        5,
+        7,
+        5,
+        3,
+        0
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "bass_11",
+      "name": "A마이너 단단한 베이스",
+      "category": "bass",
+      "genre": "hiphop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/bass_11.wav"
+      },
+      "hash": "08d87b7837f9",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": 55,
+      "semitones": [
+        0,
+        0,
+        3,
+        5,
+        7,
+        5,
+        3,
+        0
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "bass_12",
+      "name": "A마이너 빠른 베이스",
+      "category": "bass",
+      "genre": "edm",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/bass_12.wav"
+      },
+      "hash": "a0af5a1cb95a",
+      "starter": false,
+      "mood": "빠른",
+      "license": "CC0-generated",
+      "rootHz": 55,
+      "semitones": [
+        0,
+        0,
+        3,
+        5,
+        7,
+        5,
+        3,
+        0
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "melody_01",
+      "name": "A마이너 단단한 멜로디",
+      "category": "melody",
+      "genre": "hiphop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/melody_01.wav"
+      },
+      "hash": "906667bc7e15",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": 220,
+      "semitones": [
+        0,
+        2,
+        3,
+        7,
+        9,
+        12,
+        14,
+        15
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "melody_02",
+      "name": "A마이너 단단한 멜로디",
+      "category": "melody",
+      "genre": "hiphop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/melody_02.wav"
+      },
+      "hash": "2e51936d3470",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": 220,
+      "semitones": [
+        0,
+        2,
+        3,
+        7,
+        9,
+        12,
+        14,
+        15
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "melody_03",
+      "name": "A마이너 경쾌한 멜로디",
+      "category": "melody",
+      "genre": "pop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/melody_03.wav"
+      },
+      "hash": "560c406e94bf",
+      "starter": false,
+      "mood": "경쾌한",
+      "license": "CC0-generated",
+      "rootHz": 220,
+      "semitones": [
+        0,
+        2,
+        3,
+        7,
+        9,
+        12,
+        14,
+        15
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "melody_04",
+      "name": "A마이너 빠른 멜로디",
+      "category": "melody",
+      "genre": "edm",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/melody_04.wav"
+      },
+      "hash": "76699da1d7f2",
+      "starter": false,
+      "mood": "빠른",
+      "license": "CC0-generated",
+      "rootHz": 220,
+      "semitones": [
+        0,
+        2,
+        3,
+        7,
+        9,
+        12,
+        14,
+        15
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "melody_05",
+      "name": "A마이너 단단한 멜로디",
+      "category": "melody",
+      "genre": "hiphop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/melody_05.wav"
+      },
+      "hash": "2ad8e7ac6aa1",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": 220,
+      "semitones": [
+        0,
+        2,
+        3,
+        7,
+        9,
+        12,
+        14,
+        15
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "melody_06",
+      "name": "A마이너 경쾌한 멜로디",
+      "category": "melody",
+      "genre": "pop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/melody_06.wav"
+      },
+      "hash": "14bfca46c42e",
+      "starter": false,
+      "mood": "경쾌한",
+      "license": "CC0-generated",
+      "rootHz": 220,
+      "semitones": [
+        0,
+        2,
+        3,
+        7,
+        9,
+        12,
+        14,
+        15
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "melody_07",
+      "name": "A마이너 단단한 멜로디",
+      "category": "melody",
+      "genre": "hiphop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/melody_07.wav"
+      },
+      "hash": "c94b60648e3f",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": 220,
+      "semitones": [
+        0,
+        2,
+        3,
+        7,
+        9,
+        12,
+        14,
+        15
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "melody_08",
+      "name": "A마이너 빠른 멜로디",
+      "category": "melody",
+      "genre": "edm",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/melody_08.wav"
+      },
+      "hash": "700badab93ab",
+      "starter": false,
+      "mood": "빠른",
+      "license": "CC0-generated",
+      "rootHz": 220,
+      "semitones": [
+        0,
+        2,
+        3,
+        7,
+        9,
+        12,
+        14,
+        15
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "melody_09",
+      "name": "A마이너 경쾌한 멜로디",
+      "category": "melody",
+      "genre": "pop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/melody_09.wav"
+      },
+      "hash": "906667bc7e15",
+      "starter": false,
+      "mood": "경쾌한",
+      "license": "CC0-generated",
+      "rootHz": 220,
+      "semitones": [
+        0,
+        2,
+        3,
+        7,
+        9,
+        12,
+        14,
+        15
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "melody_10",
+      "name": "A마이너 단단한 멜로디",
+      "category": "melody",
+      "genre": "hiphop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/melody_10.wav"
+      },
+      "hash": "2e51936d3470",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": 220,
+      "semitones": [
+        0,
+        2,
+        3,
+        7,
+        9,
+        12,
+        14,
+        15
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "melody_11",
+      "name": "A마이너 단단한 멜로디",
+      "category": "melody",
+      "genre": "hiphop",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/melody_11.wav"
+      },
+      "hash": "560c406e94bf",
+      "starter": false,
+      "mood": "단단한",
+      "license": "CC0-generated",
+      "rootHz": 220,
+      "semitones": [
+        0,
+        2,
+        3,
+        7,
+        9,
+        12,
+        14,
+        15
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "melody_12",
+      "name": "A마이너 빠른 멜로디",
+      "category": "melody",
+      "genre": "edm",
+      "bars": 2,
+      "sourceBpm": 90,
+      "key": "Am",
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 235200,
+      "files": {
+        "wav": "/loops/melody_12.wav"
+      },
+      "hash": "76699da1d7f2",
+      "starter": false,
+      "mood": "빠른",
+      "license": "CC0-generated",
+      "rootHz": 220,
+      "semitones": [
+        0,
+        2,
+        3,
+        7,
+        9,
+        12,
+        14,
+        15
+      ],
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "fx_01",
+      "name": "반짝이는 효과음",
+      "category": "fx",
+      "genre": "hiphop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/fx_01.wav"
+      },
+      "hash": "3c8cbfa43e4e",
+      "starter": false,
+      "mood": "반짝이는",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "fx_02",
+      "name": "반짝이는 효과음",
+      "category": "fx",
+      "genre": "hiphop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/fx_02.wav"
+      },
+      "hash": "152f810f69e7",
+      "starter": false,
+      "mood": "반짝이는",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "fx_03",
+      "name": "반짝이는 효과음",
+      "category": "fx",
+      "genre": "pop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/fx_03.wav"
+      },
+      "hash": "15d1846f24b8",
+      "starter": false,
+      "mood": "반짝이는",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "fx_04",
+      "name": "반짝이는 효과음",
+      "category": "fx",
+      "genre": "edm",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/fx_04.wav"
+      },
+      "hash": "7b086a53fb59",
+      "starter": false,
+      "mood": "반짝이는",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "fx_05",
+      "name": "반짝이는 효과음",
+      "category": "fx",
+      "genre": "hiphop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/fx_05.wav"
+      },
+      "hash": "e30338e72912",
+      "starter": false,
+      "mood": "반짝이는",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "fx_06",
+      "name": "반짝이는 효과음",
+      "category": "fx",
+      "genre": "pop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/fx_06.wav"
+      },
+      "hash": "4cf97c17ff81",
+      "starter": false,
+      "mood": "반짝이는",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "fx_07",
+      "name": "반짝이는 효과음",
+      "category": "fx",
+      "genre": "hiphop",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/fx_07.wav"
+      },
+      "hash": "2e263d449bca",
+      "starter": false,
+      "mood": "반짝이는",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": null,
+      "hatStep": null
+    },
+    {
+      "id": "fx_08",
+      "name": "반짝이는 효과음",
+      "category": "fx",
+      "genre": "edm",
+      "bars": 1,
+      "sourceBpm": 90,
+      "key": null,
+      "sampleRate": 44100,
+      "channels": 1,
+      "frames": 117600,
+      "files": {
+        "wav": "/loops/fx_08.wav"
+      },
+      "hash": "f76b08242c9a",
+      "starter": false,
+      "mood": "반짝이는",
+      "license": "CC0-generated",
+      "rootHz": null,
+      "semitones": null,
+      "kickBeats": null,
+      "hatStep": null
+    }
+  ]
+}

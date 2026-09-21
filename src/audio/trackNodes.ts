@@ -2,6 +2,7 @@ import * as Tone from 'tone';
 import { audioEngine } from './engine';
 import { getBuffer, getBufferFromBlob, peekBlobBuffer, peekBuffer } from './bufferCache';
 import { applyTrackSettings, buildRenderGraph, type TrackNode } from './renderGraph';
+import { pickStretchMode, type StretchMode } from './stretch';
 import { getLoop } from '../data/loopManifest';
 import { loadAudioBlob } from '../storage/db';
 import type { Clip, Project, Track } from '../types/project';
@@ -13,6 +14,10 @@ type ClipSchedule = {
   events: number[];
   active: Set<Tone.ToneBufferSource>;
   kind: Clip['source']['kind'];
+  sourceBpm?: number;
+  stretchMode?: StretchMode;
+  grain?: Tone.GrainPlayer;
+  grainGain?: Tone.Gain;
   part?: Tone.Part;
 };
 
@@ -39,7 +44,7 @@ class TrackScheduler {
     await Promise.all(project.tracks.flatMap((track) => track.clips.map(async (clip) => {
       if (clip.source.kind === 'loop') {
         const loop = getLoop(clip.source.loopId);
-        if (loop) await getBuffer(loop.filePath);
+        if (loop) await getBuffer(loop.files.wav);
       } else if (clip.source.kind === 'recording') {
         this.clipStatus.set(clip.id, 'loading');
         try {
@@ -79,7 +84,12 @@ class TrackScheduler {
       this.bpm = project.bpm;
       for (const schedule of this.clips.values()) {
         if (schedule.kind === 'loop') {
-          for (const source of schedule.active) source.playbackRate.rampTo(project.bpm / 90, 0.02);
+          const ratio = project.bpm / (schedule.sourceBpm ?? project.bpm);
+          if (schedule.stretchMode === 'resample') {
+            for (const source of schedule.active) source.playbackRate.rampTo(ratio, 0.02);
+          } else if (schedule.stretchMode === 'grain' && schedule.grain) {
+            schedule.grain.playbackRate = ratio;
+          }
         }
       }
     }
@@ -115,28 +125,63 @@ class TrackScheduler {
       }
       const loop = getLoop(clip.source.loopId);
       if (!loop) continue;
+      const audioBuffer = peekBuffer(loop.files.wav);
+      if (!audioBuffer) continue;
+      const mode = pickStretchMode(loop.category, this.bpm / loop.sourceBpm);
+      schedule.sourceBpm = loop.sourceBpm;
+      schedule.stretchMode = mode;
+      if (mode === 'grain') {
+        schedule.grainGain = new Tone.Gain(clip.gain).connect(node.eq);
+        schedule.grain = new Tone.GrainPlayer({
+          url: audioBuffer, playbackRate: this.bpm / loop.sourceBpm, detune: 0,
+          grainSize: 0.2, overlap: 0.1,
+        }).connect(schedule.grainGain);
+      }
       const repeats = Math.max(1, Math.ceil(clip.lengthBars / loop.bars));
       for (let index = 0; index < repeats; index += 1) {
         const startBar = clip.startBar + index * loop.bars;
         const segmentBars = Math.min(loop.bars, clip.startBar + clip.lengthBars - startBar);
         if (segmentBars <= 0) continue;
-        const eventId = Tone.getTransport().schedule((time) => {
-          const audioBuffer = peekBuffer(loop.filePath);
-          if (!audioBuffer) return;
-          const source = new Tone.ToneBufferSource({
-            url: audioBuffer,
-            fadeIn: 0.005,
-            fadeOut: 0.02,
-            playbackRate: this.bpm / 90,
-          }).connect(node.eq);
-          source.onended = () => {
-            schedule.active.delete(source);
-            source.dispose();
-          };
-          schedule.active.add(source);
-          source.start(time, 0, barsToSeconds(segmentBars, this.bpm), clip.gain);
-        }, barsToTonePosition(startBar));
-        schedule.events.push(eventId);
+        if (mode === 'slice') {
+          const slices = Math.ceil(segmentBars * 16);
+          const sourceSliceSeconds = barsToSeconds(1 / 16, loop.sourceBpm);
+          for (let slice = 0; slice < slices; slice += 1) {
+            const sliceBar = startBar + slice / 16;
+            const remaining = clip.startBar + clip.lengthBars - sliceBar;
+            if (remaining <= 0) continue;
+            const offset = ((index * loop.bars * 16 + slice) % (loop.bars * 16)) * sourceSliceSeconds;
+            const eventId = Tone.getTransport().schedule((time) => {
+              const duration = Math.min(sourceSliceSeconds, barsToSeconds(1 / 16, this.bpm), barsToSeconds(remaining, this.bpm));
+              const source = new Tone.ToneBufferSource({ url: audioBuffer, fadeIn: 0.001, fadeOut: 0.003 }).connect(node.eq);
+              source.onended = () => {
+                schedule.active.delete(source);
+                source.dispose();
+              };
+              schedule.active.add(source);
+              source.start(time, offset, duration, clip.gain);
+            }, barsToTonePosition(sliceBar));
+            schedule.events.push(eventId);
+          }
+        } else {
+          const eventId = Tone.getTransport().schedule((time) => {
+            const duration = barsToSeconds(segmentBars, this.bpm);
+            if (schedule.grain) {
+              schedule.grain.start(time, 0, duration);
+              return;
+            }
+            const source = new Tone.ToneBufferSource({
+              url: audioBuffer, fadeIn: 0.005, fadeOut: 0.02,
+              playbackRate: this.bpm / loop.sourceBpm,
+            }).connect(node.eq);
+            source.onended = () => {
+              schedule.active.delete(source);
+              source.dispose();
+            };
+            schedule.active.add(source);
+            source.start(time, 0, duration, clip.gain);
+          }, barsToTonePosition(startBar));
+          schedule.events.push(eventId);
+        }
       }
       this.clips.set(clip.id, schedule);
     }
@@ -271,6 +316,15 @@ class TrackScheduler {
     if (!schedule) return;
     for (const eventId of schedule.events) Tone.getTransport().clear(eventId);
     for (const source of schedule.active) source.stop(Tone.immediate() + 0.005);
+    if (schedule.grain) {
+      schedule.grainGain?.gain.rampTo(0, 0.005);
+      schedule.grain.stop(Tone.immediate() + 0.005);
+      const { grain, grainGain } = schedule;
+      window.setTimeout(() => {
+        grain.dispose();
+        grainGain?.dispose();
+      }, 20);
+    }
     schedule.part?.dispose();
     this.clips.delete(clipId);
   }
@@ -288,7 +342,9 @@ class TrackScheduler {
   }
 
   private clipHash(clip: Clip): string {
-    return JSON.stringify([clip.id, clip.startBar, clip.lengthBars, clip.source, clip.gain]);
+    const loop = clip.source.kind === 'loop' ? getLoop(clip.source.loopId) : null;
+    const mode = loop ? pickStretchMode(loop.category, this.bpm / loop.sourceBpm) : null;
+    return JSON.stringify([clip.id, clip.startBar, clip.lengthBars, clip.source, clip.gain, mode]);
   }
 }
 

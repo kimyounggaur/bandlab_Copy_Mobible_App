@@ -31,7 +31,7 @@ async function loadClipPeaks(clip: Clip): Promise<number[] | null> {
   if (clip.source.kind === 'loop') {
     const loop = getLoop(clip.source.loopId);
     if (!loop) return null;
-    buffer = await getBuffer(loop.filePath);
+    buffer = await getBuffer(loop.files.wav);
   } else {
     const blob = await loadAudioBlob(clip.source.audioId);
     if (!blob) return null;

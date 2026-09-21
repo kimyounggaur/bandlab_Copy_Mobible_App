@@ -1,42 +1,45 @@
+import rawManifest from '../../public/loops/manifest.json';
 import type { LoopCategory, LoopGenre, LoopManifestItem } from '../types/project';
 
-const categories: Array<{ category: LoopCategory; label: string; count: number; bars: 1 | 2 | 4 }> = [
-  { category: 'drums', label: '드럼', count: 16, bars: 1 },
-  { category: 'bass', label: '베이스', count: 12, bars: 2 },
-  { category: 'melody', label: '멜로디', count: 12, bars: 2 },
-  { category: 'fx', label: '효과음', count: 8, bars: 1 },
-];
-
+const categories: LoopCategory[] = ['drums', 'bass', 'melody', 'fx'];
 const genres: LoopGenre[] = ['hiphop', 'pop', 'edm'];
-const genreLabel: Record<LoopGenre, string> = {
-  hiphop: '힙합',
-  pop: '팝',
-  edm: 'EDM',
-};
 
-const moods = ['따뜻한', '단단한', '몽글한', '반짝이는', '밤공기', '미니멀'];
+function isLoop(value: unknown): value is LoopManifestItem {
+  if (!value || typeof value !== 'object') return false;
+  const item = value as Partial<LoopManifestItem>;
+  return typeof item.id === 'string'
+    && typeof item.name === 'string'
+    && categories.includes(item.category as LoopCategory)
+    && genres.includes(item.genre as LoopGenre)
+    && [1, 2, 4].includes(item.bars as number)
+    && typeof item.sourceBpm === 'number' && item.sourceBpm > 0
+    && (item.key === null || typeof item.key === 'string')
+    && typeof item.sampleRate === 'number' && item.sampleRate > 0
+    && typeof item.channels === 'number' && item.channels > 0
+    && typeof item.frames === 'number' && item.frames > 0
+    && typeof item.files?.wav === 'string'
+    && typeof item.hash === 'string' && /^[0-9a-f]{12}$/.test(item.hash)
+    && typeof item.starter === 'boolean'
+    && typeof item.mood === 'string'
+    && item.license === 'CC0-generated';
+}
 
-export const loopManifest: LoopManifestItem[] = categories.flatMap(({ category, label, count, bars }) =>
-  Array.from({ length: count }, (_, index) => {
-    const number = index + 1;
-    const genre = genres[index % genres.length];
-    const mood = moods[index % moods.length];
-    const id = `${category}_${String(number).padStart(2, '0')}`;
-    return {
-      id,
-      name: `${genreLabel[genre]} ${mood} ${label}`,
-      category,
-      genre,
-      bars,
-      key: category === 'melody' || category === 'bass' ? ['Cm', 'Am', 'F'][index % 3] : undefined,
-      filePath: `/loops/${id}.wav`,
-      mood,
-    };
-  }),
-);
+function readManifest(value: unknown): LoopManifestItem[] {
+  if (!value || typeof value !== 'object') throw new Error('Loop manifest is invalid');
+  const manifest = value as { version?: unknown; loops?: unknown };
+  if (manifest.version !== 1 || !Array.isArray(manifest.loops) || !manifest.loops.every(isLoop)) {
+    throw new Error('Loop manifest has an unsupported schema');
+  }
+  const ids = new Set(manifest.loops.map((loop: LoopManifestItem) => loop.id));
+  if (ids.size !== manifest.loops.length) throw new Error('Loop manifest contains duplicate IDs');
+  return manifest.loops;
+}
+
+export const loopManifest = readManifest(rawManifest);
+const loopsById = new Map(loopManifest.map((loop) => [loop.id, loop]));
 
 export function getLoop(loopId: string) {
-  return loopManifest.find((loop) => loop.id === loopId);
+  return loopsById.get(loopId);
 }
 
 export function loopsByGenre(genre: LoopGenre) {
@@ -44,7 +47,7 @@ export function loopsByGenre(genre: LoopGenre) {
 }
 
 export function starterLoopsForGenre(genre: LoopGenre) {
-  const drums = loopManifest.find((loop) => loop.genre === genre && loop.category === 'drums');
-  const bass = loopManifest.find((loop) => loop.genre === genre && loop.category === 'bass');
+  const drums = loopManifest.find((loop) => loop.starter && loop.genre === genre && loop.category === 'drums');
+  const bass = loopManifest.find((loop) => loop.starter && loop.genre === genre && loop.category === 'bass');
   return { drums, bass };
 }

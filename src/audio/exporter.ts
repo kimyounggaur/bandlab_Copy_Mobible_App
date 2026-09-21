@@ -22,7 +22,7 @@ export async function exportProjectWav(project: Project, options: ExportOptions 
   await Promise.all(clips.map(async (clip) => {
     if (clip.source.kind === 'loop') {
       const loop = getLoop(clip.source.loopId);
-      if (loop && !buffers.has(loop.filePath)) buffers.set(loop.filePath, await getBuffer(loop.filePath));
+      if (loop && !buffers.has(loop.files.wav)) buffers.set(loop.files.wav, await getBuffer(loop.files.wav));
     } else if (clip.source.kind === 'recording') {
       const key = `audio:${clip.source.audioId}`;
       if (buffers.has(key)) return;

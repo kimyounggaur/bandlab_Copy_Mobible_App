@@ -1,82 +1,120 @@
+import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const sampleRate = 22050;
-const bpm = 90;
-const beatSeconds = 60 / bpm;
+const sampleRate = 44100;
+const sourceBpm = 90;
+const beatSeconds = 60 / sourceBpm;
+const bassNotes = [0, 0, 3, 5, 7, 5, 3, 0];
+const melodyNotes = [0, 2, 3, 7, 9, 12, 14, 15];
 const categories = [
   { category: 'drums', count: 16, bars: 1 },
   { category: 'bass', count: 12, bars: 2 },
   { category: 'melody', count: 12, bars: 2 },
   { category: 'fx', count: 8, bars: 1 },
 ];
-
 const outputDir = join(process.cwd(), 'public', 'loops');
 mkdirSync(outputDir, { recursive: true });
+const loops = [];
 
 for (const group of categories) {
-  for (let index = 1; index <= group.count; index += 1) {
-    const id = `${group.category}_${String(index).padStart(2, '0')}`;
-    const samples = synthesizeLoop(group.category, index, group.bars);
-    writeFileSync(join(outputDir, `${id}.wav`), encodeWav(samples));
+  for (let variant = 1; variant <= group.count; variant += 1) {
+    const id = `${group.category}_${String(variant).padStart(2, '0')}`;
+    const genre = grooveFor(variant);
+    const samples = synthesizeLoop(group.category, variant, group.bars, genre);
+    const wav = encodeWav(samples);
+    writeFileSync(join(outputDir, `${id}.wav`), wav);
+    const mood = group.category === 'fx' ? '반짝이는' : genre === 'hiphop' ? '단단한' : genre === 'pop' ? '경쾌한' : '빠른';
+    const label = { drums: '드럼', bass: '베이스', melody: '멜로디', fx: '효과음' }[group.category];
+    loops.push({
+      id,
+      name: group.category === 'bass' || group.category === 'melody' ? `A마이너 ${mood} ${label}` : `${mood} ${label}`,
+      category: group.category,
+      genre,
+      bars: group.bars,
+      sourceBpm,
+      key: group.category === 'bass' || group.category === 'melody' ? 'Am' : null,
+      sampleRate,
+      channels: 1,
+      frames: samples.length,
+      files: { wav: `/loops/${id}.wav` },
+      hash: createHash('sha1').update(wav).digest('hex').slice(0, 12),
+      starter: (group.category === 'drums' || group.category === 'bass') && [1, 3, 4].includes(variant),
+      mood,
+      license: 'CC0-generated',
+      rootHz: group.category === 'bass' ? 55 : group.category === 'melody' ? 220 : null,
+      semitones: group.category === 'bass' ? bassNotes : group.category === 'melody' ? melodyNotes : null,
+      kickBeats: group.category === 'drums' ? kickPattern(variant) : null,
+      hatStep: group.category === 'drums' ? hatStep(variant) : null,
+    });
   }
 }
+writeFileSync(join(outputDir, 'manifest.json'), JSON.stringify({ version: 1, loops }, null, 2) + '\n');
 
-function synthesizeLoop(category, variant, bars) {
-  const duration = bars * 4 * beatSeconds;
-  const total = Math.floor(duration * sampleRate);
+// Genre labels follow the rhythm that is actually synthesized below.
+function grooveFor(variant) {
+  if (variant % 4 === 0) return 'edm';
+  if (variant % 3 === 0) return 'pop';
+  return 'hiphop';
+}
+
+function kickPattern(variant) {
+  return variant % 3 === 0 ? [0, 2.5] : [0, 2];
+}
+
+function hatStep(variant) {
+  return variant % 4 === 0 ? 0.25 : 0.5;
+}
+
+function synthesizeLoop(category, variant, bars, genre) {
+  const total = Math.round(bars * 4 * beatSeconds * sampleRate);
   const data = new Float32Array(total);
+  let bassPhase = 0;
+  let melodyPhase = 0;
+  let fxPhase = 0;
   for (let i = 0; i < total; i += 1) {
     const t = i / sampleRate;
     const beat = t / beatSeconds;
-    const beatPhase = beat % 1;
     let value = 0;
-
     if (category === 'drums') {
-      const kickPattern = variant % 3 === 0 ? [0, 2.5] : [0, 2];
-      const snarePattern = [1, 3];
-      const hatStep = variant % 4 === 0 ? 0.25 : 0.5;
-      value += kickPattern.some((b) => closeToBeat(beat, b, 4)) ? sineSweep(t, beatPhase, 56 + variant) * 0.95 : 0;
-      value += snarePattern.some((b) => closeToBeat(beat, b, 4)) ? noise(i, variant) * envelope(beatPhase, 18) * 0.42 : 0;
-      value += beat % hatStep < 0.05 ? noise(i, variant + 3) * envelope((beat % hatStep) / hatStep, 24) * 0.18 : 0;
+      for (const kickBeat of kickPattern(variant)) {
+        const tau = t - kickBeat * beatSeconds;
+        if (tau >= 0 && tau < beatSeconds * 0.24) value += kick(tau, 56 + variant) * 0.95;
+      }
+      for (const snareBeat of [1, 3]) {
+        const tau = t - snareBeat * beatSeconds;
+        if (tau >= 0 && tau < beatSeconds * 0.2) value += noise(i, variant) * Math.exp(-18 * tau / beatSeconds) * 0.42;
+      }
+      const step = hatStep(variant);
+      const hatTau = t - Math.floor(beat / step) * step * beatSeconds;
+      if (hatTau < beatSeconds * 0.05) value += noise(i, variant + 3) * Math.exp(-24 * hatTau / beatSeconds) * 0.18;
     } else if (category === 'bass') {
-      const sequence = [0, 0, 3, 5, 7, 5, 3, 0];
-      const step = Math.floor(beat * 2) % sequence.length;
-      const freq = 55 * Math.pow(2, sequence[(step + variant) % sequence.length] / 12);
-      value = softSaw(freq, t) * (0.55 + 0.15 * Math.sin(beat * Math.PI)) * envelope(beat % 0.5, 3);
+      const step = Math.floor(beat * 2) % bassNotes.length;
+      const freq = 55 * 2 ** (bassNotes[(step + variant) % bassNotes.length] / 12);
+      bassPhase = (bassPhase + freq / sampleRate) % 1;
+      const rhythm = genre === 'edm' ? (beat % 0.5 < 0.3 ? 1 : 0.35) : genre === 'pop' ? 0.85 : 1;
+      value = Math.tanh((bassPhase * 2 - 1) * 1.8) * rhythm * (0.55 + 0.15 * Math.sin(beat * Math.PI));
+      value *= Math.exp(-3 * (beat % 0.5));
     } else if (category === 'melody') {
-      const scale = [0, 2, 3, 7, 9, 12, 14, 15];
-      const step = Math.floor(beat * 2) % scale.length;
-      const freq = 220 * Math.pow(2, scale[(step + variant) % scale.length] / 12);
-      value = (Math.sin(2 * Math.PI * freq * t) + 0.4 * Math.sin(2 * Math.PI * freq * 2 * t)) * 0.35;
-      value *= envelope(beat % 0.5, 4);
+      const step = Math.floor(beat * 2) % melodyNotes.length;
+      const freq = 220 * 2 ** (melodyNotes[(step + variant) % melodyNotes.length] / 12);
+      melodyPhase = (melodyPhase + freq / sampleRate) % 1;
+      value = (Math.sin(2 * Math.PI * melodyPhase) + 0.4 * Math.sin(4 * Math.PI * melodyPhase)) * 0.35;
+      value *= Math.exp(-4 * (beat % 0.5));
     } else {
       const sweep = 180 + (variant % 4) * 90 + beat * 28;
-      const fade = Math.sin(Math.PI * Math.min(1, i / total));
-      value = Math.sin(2 * Math.PI * sweep * t) * fade * 0.28 + noise(i, variant) * 0.05 * fade;
+      fxPhase = (fxPhase + sweep / sampleRate) % 1;
+      const fade = Math.sin(Math.PI * i / total);
+      value = Math.sin(2 * Math.PI * fxPhase) * fade * 0.28 + noise(i, variant) * 0.05 * fade;
     }
-
     data[i] = Math.max(-0.98, Math.min(0.98, value));
   }
   return data;
 }
 
-function closeToBeat(beat, target, modulo) {
-  const local = beat % modulo;
-  return Math.abs(local - target) < 0.08;
-}
-
-function envelope(phase, speed) {
-  return Math.exp(-phase * speed);
-}
-
-function sineSweep(t, phase, base) {
-  return Math.sin(2 * Math.PI * (base + 58 * Math.exp(-phase * 15)) * t) * envelope(phase, 12);
-}
-
-function softSaw(freq, t) {
-  const phase = (freq * t) % 1;
-  return Math.tanh((phase * 2 - 1) * 1.8);
+function kick(tau, base) {
+  const phase = 2 * Math.PI * (base * tau + 58 * (beatSeconds / 15) * (1 - Math.exp(-15 * tau / beatSeconds)));
+  return Math.sin(phase) * Math.exp(-12 * tau / beatSeconds);
 }
 
 function noise(i, seed) {
@@ -85,24 +123,23 @@ function noise(i, seed) {
 }
 
 function encodeWav(samples) {
-  const bytesPerSample = 2;
-  const buffer = Buffer.alloc(44 + samples.length * bytesPerSample);
+  const buffer = Buffer.alloc(44 + samples.length * 2);
   buffer.write('RIFF', 0);
-  buffer.writeUInt32LE(36 + samples.length * bytesPerSample, 4);
+  buffer.writeUInt32LE(36 + samples.length * 2, 4);
   buffer.write('WAVE', 8);
   buffer.write('fmt ', 12);
   buffer.writeUInt32LE(16, 16);
   buffer.writeUInt16LE(1, 20);
   buffer.writeUInt16LE(1, 22);
   buffer.writeUInt32LE(sampleRate, 24);
-  buffer.writeUInt32LE(sampleRate * bytesPerSample, 28);
-  buffer.writeUInt16LE(bytesPerSample, 32);
+  buffer.writeUInt32LE(sampleRate * 2, 28);
+  buffer.writeUInt16LE(2, 32);
   buffer.writeUInt16LE(16, 34);
   buffer.write('data', 36);
-  buffer.writeUInt32LE(samples.length * bytesPerSample, 40);
+  buffer.writeUInt32LE(samples.length * 2, 40);
   for (let i = 0; i < samples.length; i += 1) {
     const clipped = Math.max(-1, Math.min(1, samples[i]));
-    buffer.writeInt16LE(clipped < 0 ? clipped * 0x8000 : clipped * 0x7fff, 44 + i * bytesPerSample);
+    buffer.writeInt16LE(clipped < 0 ? clipped * 0x8000 : clipped * 0x7fff, 44 + i * 2);
   }
   return buffer;
 }

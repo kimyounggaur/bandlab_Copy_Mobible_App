@@ -63,7 +63,7 @@ export function createStarterProject(genre: LoopGenre = 'hiphop'): Project {
     updatedAt: now,
     bpm: bpmByGenre[genre],
     masterVolume: 80,
-    key: 'Cm',
+    key: 'Am',
     timeSignature: [4, 4],
     loopLengthBars: 8,
     tracks: [drums, bass],

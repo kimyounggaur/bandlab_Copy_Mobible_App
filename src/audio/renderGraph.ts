@@ -1,5 +1,6 @@
 import * as Tone from 'tone';
 import { getLoop } from '../data/loopManifest';
+import { pickStretchMode } from './stretch';
 import type { Clip, Project, Track } from '../types/project';
 import { barsToSeconds, barsToTonePosition, volumeToDb } from '../utils/music';
 
@@ -115,16 +116,39 @@ function scheduleOfflineClip(
     return;
   }
   const loop = getLoop(clip.source.loopId);
-  const buffer = loop && buffers.get(loop.filePath);
+  const buffer = loop && buffers.get(loop.files.wav);
   if (!loop || !buffer) return;
+  const mode = pickStretchMode(loop.category, project.bpm / loop.sourceBpm);
+  const grainGain = mode === 'grain' ? new Tone.Gain(clip.gain).connect(node.eq) : null;
+  const grain = grainGain ? new Tone.GrainPlayer({
+    context: ctx, url: buffer, playbackRate: project.bpm / loop.sourceBpm,
+    detune: 0, grainSize: 0.2, overlap: 0.1,
+  }).connect(grainGain) : null;
   const repeats = Math.max(1, Math.ceil(clip.lengthBars / loop.bars));
   for (let index = 0; index < repeats; index += 1) {
     const startBar = clip.startBar + index * loop.bars;
     const segmentBars = Math.min(loop.bars, clip.startBar + clip.lengthBars - startBar, project.loopLengthBars - startBar);
     if (segmentBars <= 0) continue;
+    if (mode === 'slice') {
+      const sourceSliceSeconds = barsToSeconds(1 / 16, loop.sourceBpm);
+      for (let slice = 0; slice < Math.ceil(segmentBars * 16); slice += 1) {
+        const sliceBar = startBar + slice / 16;
+        const remaining = Math.min(segmentBars - slice / 16, project.loopLengthBars - sliceBar);
+        if (remaining <= 0) continue;
+        const offset = slice * sourceSliceSeconds;
+        transport.schedule((time) => {
+          const duration = Math.min(sourceSliceSeconds, barsToSeconds(1 / 16, project.bpm), barsToSeconds(remaining, project.bpm));
+          new Tone.ToneBufferSource({ context: ctx, url: buffer, fadeIn: 0.001, fadeOut: 0.003 })
+            .connect(node.eq).start(time, offset, duration, clip.gain);
+        }, barsToTonePosition(sliceBar));
+      }
+      continue;
+    }
     transport.schedule((time) => {
-      new Tone.ToneBufferSource({ context: ctx, url: buffer, fadeIn: 0.005, fadeOut: 0.02, playbackRate: project.bpm / 90 })
-        .connect(node.eq).start(time, 0, barsToSeconds(segmentBars, project.bpm), clip.gain);
+      const duration = barsToSeconds(segmentBars, project.bpm);
+      if (grain) grain.start(time, 0, duration);
+      else new Tone.ToneBufferSource({ context: ctx, url: buffer, fadeIn: 0.005, fadeOut: 0.02, playbackRate: project.bpm / loop.sourceBpm })
+        .connect(node.eq).start(time, 0, duration, clip.gain);
     }, barsToTonePosition(startBar));
   }
 }
