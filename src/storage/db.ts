@@ -50,3 +50,13 @@ export async function loadAudioBlob(id: string) {
   const db = await dbPromise;
   return db.get('audio', id);
 }
+
+export async function saveMeta(key: string, value: unknown) {
+  const db = await dbPromise;
+  await db.put('meta', value, key);
+}
+
+export async function loadMeta<T>(key: string): Promise<T | undefined> {
+  const db = await dbPromise;
+  return db.get('meta', key) as Promise<T | undefined>;
+}

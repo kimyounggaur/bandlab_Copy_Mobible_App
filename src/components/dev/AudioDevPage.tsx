@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { audioEngine } from '../../audio/engine';
+import { measurePipelineLatency } from '../../audio/latency';
 import { useProjectStore } from '../../stores/projectStore';
 import { formatBarBeat } from '../../utils/music';
 
@@ -63,6 +64,15 @@ export function AudioDevPage() {
           }}
         >
           메인 스레드 400ms 정지
+        </button>
+        <button
+          className="min-h-12 rounded-studio bg-studio-card"
+          onClick={async () => {
+            await audioEngine.ensureReady();
+            await measurePipelineLatency(true);
+          }}
+        >
+          녹음 지연 다시 측정
         </button>
         <p className="rounded-panel border border-studio-border bg-studio-card p-4 text-title">현재 위치 {formatBarBeat(position)}</p>
       </div>

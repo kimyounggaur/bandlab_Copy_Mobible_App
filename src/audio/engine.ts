@@ -1,4 +1,5 @@
 import * as Tone from 'tone';
+import { getPipelineLatency } from './latency';
 import type { Project } from '../types/project';
 import { barsToSeconds, barsToTonePosition, clamp, formatBarBeat, toneToBars } from '../utils/music';
 
@@ -57,6 +58,7 @@ class AudioEngine {
     this.state.initialized = true;
     this.state.needsResume = false;
     this.emit();
+    window.setTimeout(() => { void getPipelineLatency().catch(() => undefined); }, 500);
   }
 
   async ensureReady() {

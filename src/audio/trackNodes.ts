@@ -1,7 +1,8 @@
 import * as Tone from 'tone';
 import { audioEngine } from './engine';
-import { getBuffer, peekBuffer } from './bufferCache';
+import { getBuffer, getBufferFromBlob, peekBlobBuffer, peekBuffer } from './bufferCache';
 import { getLoop } from '../data/loopManifest';
+import { loadAudioBlob } from '../storage/db';
 import type { Clip, Project, Track } from '../types/project';
 import { barsToSeconds, barsToTonePosition, volumeToDb } from '../utils/music';
 
@@ -12,6 +13,9 @@ type TrackNode = {
   eq: Tone.EQ3;
   compressor: Tone.Compressor;
   meter: Tone.Meter;
+  keys?: Tone.PolySynth;
+  drumTone?: Tone.MembraneSynth;
+  drumNoise?: Tone.NoiseSynth;
 };
 
 type ClipSchedule = {
@@ -19,6 +23,8 @@ type ClipSchedule = {
   trackId: string;
   events: number[];
   active: Set<Tone.ToneBufferSource>;
+  kind: Clip['source']['kind'];
+  part?: Tone.Part;
 };
 
 class TrackScheduler {
@@ -28,6 +34,7 @@ class TrackScheduler {
   private generation = 0;
   private structureKey = '';
   private bpm = 90;
+  private clipStatus = new Map<string, 'missing' | 'loading' | 'ready'>();
 
   async syncProject(project: Project): Promise<void> {
     this.applyTransport(project);
@@ -37,12 +44,27 @@ class TrackScheduler {
     const structureKey = JSON.stringify(project.tracks.map((track) => [track.id, track.clips.map((clip) => this.clipHash(clip))]));
     if (structureKey === this.structureKey) return;
     const generation = ++this.generation;
-    const urls = project.tracks.flatMap((track) => track.clips.flatMap((clip) => {
-      if (clip.source.kind !== 'loop') return [];
-      const loop = getLoop(clip.source.loopId);
-      return loop ? [loop.filePath] : [];
-    }));
-    await Promise.all([...new Set(urls)].map((url) => getBuffer(url)));
+    await Promise.all(project.tracks.flatMap((track) => track.clips.map(async (clip) => {
+      if (clip.source.kind === 'loop') {
+        const loop = getLoop(clip.source.loopId);
+        if (loop) await getBuffer(loop.filePath);
+      } else if (clip.source.kind === 'recording') {
+        this.clipStatus.set(clip.id, 'loading');
+        try {
+          const blob = await loadAudioBlob(clip.source.audioId);
+          if (!blob) {
+            this.clipStatus.set(clip.id, 'missing');
+            return;
+          }
+          await getBufferFromBlob(clip.source.audioId, blob);
+          this.clipStatus.set(clip.id, 'ready');
+        } catch {
+          this.clipStatus.set(clip.id, 'missing');
+        }
+      } else {
+        this.clipStatus.set(clip.id, 'ready');
+      }
+    })));
     if (generation !== this.generation) return;
 
     this.removeMissingTracks(project);
@@ -66,7 +88,9 @@ class TrackScheduler {
     if (this.bpm !== project.bpm) {
       this.bpm = project.bpm;
       for (const schedule of this.clips.values()) {
-        for (const source of schedule.active) source.playbackRate.rampTo(project.bpm / 90, 0.02);
+        if (schedule.kind === 'loop') {
+          for (const source of schedule.active) source.playbackRate.rampTo(project.bpm / 90, 0.02);
+        }
       }
     }
     audioEngine.applyProjectTransport(project);
@@ -75,17 +99,32 @@ class TrackScheduler {
   reconcileClips(track: Track): void {
     const liveIds = new Set(track.clips.map((clip) => clip.id));
     for (const [clipId, schedule] of this.clips) {
-      if (schedule.trackId === track.id && !liveIds.has(clipId)) this.clearClip(clipId);
+      if (schedule.trackId === track.id && !liveIds.has(clipId)) {
+        this.clearClip(clipId);
+        this.clipStatus.delete(clipId);
+      }
     }
     for (const clip of track.clips) {
       const hash = this.clipHash(clip);
       if (this.clips.get(clip.id)?.hash === hash) continue;
       this.clearClip(clip.id);
-      if (clip.source.kind !== 'loop') continue;
-      const loop = getLoop(clip.source.loopId);
       const node = this.nodes.get(track.id);
-      if (!loop || !node) continue;
-      const schedule: ClipSchedule = { hash, trackId: track.id, events: [], active: new Set() };
+      if (!node) continue;
+      const schedule: ClipSchedule = { hash, trackId: track.id, events: [], active: new Set(), kind: clip.source.kind };
+      if (clip.source.kind === 'notes') {
+        this.scheduleNotes(clip, node, schedule);
+        this.clips.set(clip.id, schedule);
+        continue;
+      }
+      if (clip.source.kind === 'recording') {
+        if (this.clipStatus.get(clip.id) === 'ready') {
+          this.scheduleRecording(clip, node, schedule);
+          this.clips.set(clip.id, schedule);
+        }
+        continue;
+      }
+      const loop = getLoop(clip.source.loopId);
+      if (!loop) continue;
       const repeats = Math.max(1, Math.ceil(clip.lengthBars / loop.bars));
       for (let index = 0; index < repeats; index += 1) {
         const startBar = clip.startBar + index * loop.bars;
@@ -111,6 +150,59 @@ class TrackScheduler {
       }
       this.clips.set(clip.id, schedule);
     }
+  }
+
+  getClipStatus(clipId: string): 'missing' | 'loading' | 'ready' | undefined {
+    return this.clipStatus.get(clipId);
+  }
+
+  private scheduleRecording(clip: Clip, node: TrackNode, schedule: ClipSchedule): void {
+    if (clip.source.kind !== 'recording') return;
+    const { audioId, offsetSec } = clip.source;
+    const buffer = peekBlobBuffer(audioId);
+    if (!buffer) return;
+    const delaySec = Math.max(0, -offsetSec);
+    const offset = Math.max(0, offsetSec);
+    const duration = Math.max(0, Math.min(barsToSeconds(clip.lengthBars, this.bpm) - delaySec, buffer.duration - offset));
+    if (duration <= 0) return;
+    const startBar = clip.startBar + delaySec / barsToSeconds(1, this.bpm);
+    const eventId = Tone.getTransport().schedule((time) => {
+      const source = new Tone.ToneBufferSource({ url: buffer, fadeIn: 0.005, fadeOut: 0.02 }).connect(node.eq);
+      source.onended = () => {
+        schedule.active.delete(source);
+        source.dispose();
+      };
+      schedule.active.add(source);
+      source.start(time, offset, duration, clip.gain);
+    }, barsToTonePosition(startBar));
+    schedule.events.push(eventId);
+  }
+
+  private scheduleNotes(clip: Clip, node: TrackNode, schedule: ClipSchedule): void {
+    if (clip.source.kind !== 'notes') return;
+    const isDrums = clip.source.instrument === 'drums';
+    if (isDrums) {
+      node.drumTone ??= new Tone.MembraneSynth({ volume: -8 }).connect(node.eq);
+      node.drumNoise ??= new Tone.NoiseSynth({ volume: -12 }).connect(node.eq);
+    } else {
+      node.keys ??= new Tone.PolySynth({ voice: Tone.Synth, maxPolyphony: 8, options: { volume: -10 } }).connect(node.eq);
+    }
+    const notes = clip.source.notes.map((note) => ({
+      time: note.t,
+      note: note.note,
+      dur: note.dur,
+      velocity: note.velocity ?? 0.8,
+    }));
+    const part = new Tone.Part((time, note) => {
+      if (isDrums) {
+        if (note.note.toLowerCase().includes('snare')) node.drumNoise?.triggerAttackRelease(note.dur, time, note.velocity);
+        else node.drumTone?.triggerAttackRelease(note.note, note.dur, time, note.velocity);
+      } else {
+        node.keys?.triggerAttackRelease(note.note, note.dur, time, note.velocity);
+      }
+    }, notes).start(barsToTonePosition(clip.startBar));
+    part.stop(barsToTonePosition(clip.startBar + clip.lengthBars));
+    schedule.part = part;
   }
 
   getMeters(): Record<string, number> {
@@ -169,6 +261,7 @@ class TrackScheduler {
     if (!schedule) return;
     for (const eventId of schedule.events) Tone.getTransport().clear(eventId);
     for (const source of schedule.active) source.stop(Tone.immediate() + 0.005);
+    schedule.part?.dispose();
     this.clips.delete(clipId);
   }
 
@@ -179,6 +272,9 @@ class TrackScheduler {
     node.reverb.dispose();
     node.channel.dispose();
     node.meter.dispose();
+    node.keys?.dispose();
+    node.drumTone?.dispose();
+    node.drumNoise?.dispose();
   }
 
   private applyEffects(track: Track, node: TrackNode): void {

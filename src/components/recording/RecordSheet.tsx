@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { MicRecorder, type RecorderState } from '../../audio/recorder';
 import { audioEngine } from '../../audio/engine';
+import { getPipelineLatency } from '../../audio/latency';
 import { useProjectStore } from '../../stores/projectStore';
 import { createId } from '../../utils/ids';
 import { BottomSheet } from '../common/BottomSheet';
@@ -14,6 +15,7 @@ type RecordSheetProps = {
 
 export function RecordSheet({ open, playheadBar, onClose, onToast }: RecordSheetProps) {
   const recorderRef = useRef<MicRecorder | null>(null);
+  const pipelineLatencyRef = useRef(0);
   const [state, setState] = useState<RecorderState>('idle');
   const [monitoring, setMonitoring] = useState(false);
   const [offsetMs, setOffsetMs] = useState(0);
@@ -25,6 +27,7 @@ export function RecordSheet({ open, playheadBar, onClose, onToast }: RecordSheet
     try {
       setState('requesting');
       await audioEngine.ensureReady();
+      pipelineLatencyRef.current = await getPipelineLatency().catch(() => 0);
       recorderRef.current ??= new MicRecorder();
       await recorderRef.current.request();
       setState('recording');
@@ -50,7 +53,7 @@ export function RecordSheet({ open, playheadBar, onClose, onToast }: RecordSheet
           lengthBars: 1,
           gain: 1,
           name: '새 녹음',
-          source: { kind: 'recording', audioId: result.audioId, offsetSec: 0 },
+          source: { kind: 'recording', audioId: result.audioId, offsetSec: pipelineLatencyRef.current },
         });
       }
       setState('ready');
