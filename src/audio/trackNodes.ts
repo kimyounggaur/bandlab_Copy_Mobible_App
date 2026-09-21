@@ -5,7 +5,7 @@ import { applyTrackSettings, buildRenderGraph, type TrackNode } from './renderGr
 import { getLoop } from '../data/loopManifest';
 import { loadAudioBlob } from '../storage/db';
 import type { Clip, Project, Track } from '../types/project';
-import { barsToSeconds, barsToTonePosition } from '../utils/music';
+import { barsToSeconds, barsToTonePosition, volumeToDb } from '../utils/music';
 
 type ClipSchedule = {
   hash: string;
@@ -20,6 +20,8 @@ class TrackScheduler {
   private nodes = new Map<string, TrackNode>();
   private clips = new Map<string, ClipSchedule>();
   private limiter: Tone.Limiter | null = null;
+  private masterInput: Tone.Volume | null = null;
+  private masterMeter: Tone.Meter | null = null;
   private generation = 0;
   private structureKey = '';
   private bpm = 90;
@@ -63,6 +65,7 @@ class TrackScheduler {
   }
 
   applyTrackParams(project: Project): void {
+    this.masterInput?.volume.rampTo(volumeToDb(project.masterVolume), 0.02);
     const hasSolo = project.tracks.some((track) => track.solo);
     for (const track of project.tracks) {
       const node = this.nodes.get(track.id);
@@ -196,14 +199,26 @@ class TrackScheduler {
     const meters: Record<string, number> = {};
     for (const [trackId, node] of this.nodes) {
       const value = node.meter.getValue();
-      meters[trackId] = typeof value === 'number' ? Math.max(0, Math.min(1, value)) : 0;
+      const level = Array.isArray(value) ? Math.max(...value) : value;
+      meters[trackId] = node.channel.mute ? 0 : typeof level === 'number' ? Math.max(0, Math.min(1, level)) : 0;
     }
     return meters;
   }
 
-  getMasterInput(): Tone.Limiter {
+  getMasterInput(): Tone.Volume {
     this.limiter ??= new Tone.Limiter(-1).toDestination();
-    return this.limiter;
+    if (!this.masterInput) {
+      this.masterInput = new Tone.Volume(volumeToDb(80)).connect(this.limiter);
+      this.masterMeter = new Tone.Meter({ normalRange: true });
+      this.masterInput.connect(this.masterMeter);
+    }
+    return this.masterInput;
+  }
+
+  getMasterLevel(): number {
+    const value = this.masterMeter?.getValue();
+    const level = Array.isArray(value) ? Math.max(...value) : value;
+    return typeof level === 'number' ? Math.max(0, Math.min(1, level)) : 0;
   }
 
   dispose(): void {
@@ -211,6 +226,10 @@ class TrackScheduler {
     for (const clipId of this.clips.keys()) this.clearClip(clipId);
     for (const node of this.nodes.values()) this.disposeNode(node);
     this.nodes.clear();
+    this.masterInput?.dispose();
+    this.masterInput = null;
+    this.masterMeter?.dispose();
+    this.masterMeter = null;
     this.limiter?.dispose();
     this.limiter = null;
     this.structureKey = '';
@@ -220,9 +239,10 @@ class TrackScheduler {
     if (this.nodeBuild) await this.nodeBuild;
     const missing = project.tracks.filter((track) => !this.nodes.has(track.id));
     if (!missing.length) return;
+    const masterInput = this.getMasterInput();
     const build = buildRenderGraph(
       { ...project, tracks: missing }, Tone.getContext(), new Map(),
-      { limiter: this.getMasterInput(), schedule: false },
+      { limiter: this.limiter!, masterInput, schedule: false },
     ).then((graph) => {
       for (const [trackId, node] of graph.nodes) this.nodes.set(trackId, node);
     });

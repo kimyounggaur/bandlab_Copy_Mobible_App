@@ -1,6 +1,7 @@
 import { Copy, Trash2 } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { audioEngine } from '../../audio/engine';
+import { getPeaksForClip } from '../../audio/peaks';
 import { useProjectStore } from '../../stores/projectStore';
 import type { Clip, Track } from '../../types/project';
 import { clamp, snapBar } from '../../utils/music';
@@ -95,6 +96,7 @@ export function Timeline({ positionBars }: TimelineProps) {
                 selected={selectedTrackId === track.id}
                 barWidth={barWidth}
                 totalWidth={totalWidth}
+                ruler={ruler}
                 onSelect={() => selectTrack(track.id)}
                 onToggleMute={() => updateTrack(track.id, { mute: !track.mute })}
                 onToggleSolo={() => updateTrack(track.id, { solo: !track.solo })}
@@ -113,13 +115,14 @@ type TrackLaneProps = {
   selected: boolean;
   barWidth: number;
   totalWidth: number;
+  ruler: number[];
   onSelect: () => void;
   onToggleMute: () => void;
   onToggleSolo: () => void;
   onRename: (name: string) => void;
 };
 
-function TrackLane({ track, selected, barWidth, totalWidth, onSelect, onToggleMute, onToggleSolo, onRename }: TrackLaneProps) {
+function TrackLane({ track, selected, barWidth, totalWidth, ruler, onSelect, onToggleMute, onToggleSolo, onRename }: TrackLaneProps) {
   return (
     <div className={`flex border-b border-studio-border ${selected ? 'bg-studio-accent/5' : 'bg-studio-bg'}`} style={{ height: laneHeight }}>
       <div
@@ -155,11 +158,11 @@ function TrackLane({ track, selected, barWidth, totalWidth, onSelect, onToggleMu
         </div>
       </div>
       <div className="relative" style={{ width: totalWidth }}>
-        {Array.from({ length: Math.ceil(totalWidth / barWidth) }).map((_, index) => (
+        {ruler.map((bar) => (
           <div
-            key={index}
+            key={bar}
             className="absolute bottom-0 top-0 border-l border-studio-border/40"
-            style={{ left: index * barWidth }}
+            style={{ left: bar * barWidth }}
           />
         ))}
         {track.clips.map((clip) => (
@@ -177,6 +180,7 @@ type ClipBlockProps = {
 };
 
 function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
+  const [peaks, setPeaks] = useState<number[] | null>(null);
   const selectedClipId = useProjectStore((state) => state.selectedClipId);
   const selectClip = useProjectStore((state) => state.selectClip);
   const selectTrack = useProjectStore((state) => state.selectTrack);
@@ -193,6 +197,16 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
   } | null>(null);
 
   const selected = selectedClipId === clip.id;
+  useEffect(() => {
+    let cancelled = false;
+    void getPeaksForClip(clip).then((result) => {
+      if (!cancelled) setPeaks(result);
+    });
+    return () => { cancelled = true; };
+  }, [clip]);
+
+  const visibleBuckets = clip.lengthBars * barWidth < 200 ? 24 : 96;
+  const peakPath = peaks ? makePeakPath(peaks, visibleBuckets) : null;
 
   function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -260,14 +274,14 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
         }}
       >
         <div className="min-w-0 flex-1 truncate text-studio-bg">{clip.name}</div>
-        <div className="ml-2 flex h-7 w-14 items-end gap-0.5 opacity-65">
-          {Array.from({ length: 10 }).map((_, index) => (
-            <span
-              key={index}
-              className="w-1 rounded-full bg-studio-bg"
-              style={{ height: `${30 + ((index * 17) % 50)}%` }}
-            />
-          ))}
+        <div className="ml-2 h-8 w-1/2 shrink-0 overflow-hidden opacity-70">
+          {peakPath ? (
+            <svg viewBox="0 0 96 100" preserveAspectRatio="none" className="h-full w-full text-studio-bg" aria-hidden="true">
+              <path d={peakPath} fill="none" stroke="currentColor" strokeWidth={visibleBuckets === 24 ? 2 : 1} />
+            </svg>
+          ) : (
+            <div className="mt-3 h-2 w-full bg-studio-bg/20" aria-hidden="true" />
+          )}
         </div>
       </div>
       {menuOpen ? (
@@ -310,4 +324,17 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
       ) : null}
     </>
   );
+}
+
+function makePeakPath(peaks: number[], count: number): string {
+  const commands: string[] = [];
+  for (let index = 0; index < count; index += 1) {
+    const start = Math.floor(index * peaks.length / count);
+    const end = Math.max(start + 1, Math.floor((index + 1) * peaks.length / count));
+    const level = Math.max(...peaks.slice(start, end));
+    const extent = Math.max(1, level * 47);
+    const x = ((index + 0.5) / count * 96).toFixed(2);
+    commands.push(`M ${x} ${(50 - extent).toFixed(2)} V ${(50 + extent).toFixed(2)}`);
+  }
+  return commands.join(' ');
 }

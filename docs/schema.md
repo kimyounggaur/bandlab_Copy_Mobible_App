@@ -2,12 +2,13 @@
 
 ```jsonc
 {
-  "version": 1,
+  "version": 2,
   "id": "uuid",
   "name": "내 프로젝트",
   "createdAt": 0,
   "updatedAt": 0,
   "bpm": 90,
+  "masterVolume": 80,
   "key": "Cm",
   "timeSignature": [4, 4],
   "loopLengthBars": 8,
@@ -46,4 +47,5 @@
 - `startBar` and `lengthBars` snap to 0.25 bar.
 - `tracks` is capped at 8 items for MVP.
 - Recording audio is stored in IndexedDB `audio`; project JSON only keeps an `audioId`.
+- Version 1 projects are loaded with `masterVolume: 80` and migrated to version 2.
 - Effects store intent and simple parameters, so the audio engine can be replaced later.

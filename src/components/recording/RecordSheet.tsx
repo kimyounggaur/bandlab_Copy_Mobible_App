@@ -32,6 +32,7 @@ export function RecordSheet({ open, playheadBar, onClose, onToast }: RecordSheet
       await recorderRef.current.request();
       setState('recording');
       await recorderRef.current.start();
+      audioEngine.setRecording(true);
     } catch {
       setState('denied');
     }
@@ -40,6 +41,7 @@ export function RecordSheet({ open, playheadBar, onClose, onToast }: RecordSheet
   async function stop() {
     try {
       const result = await recorderRef.current?.stop();
+      audioEngine.setRecording(false);
       if (!result) return;
       let trackId = selectedTrackId;
       if (!trackId) {
@@ -59,6 +61,7 @@ export function RecordSheet({ open, playheadBar, onClose, onToast }: RecordSheet
       setState('ready');
       onToast('녹음 클립을 만들었어요');
     } catch {
+      audioEngine.setRecording(false);
       setState('error');
     }
   }

@@ -1,17 +1,61 @@
 import { SlidersHorizontal } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { audioEngine } from '../../audio/engine';
+import { trackScheduler } from '../../audio/trackNodes';
 import { useProjectStore } from '../../stores/projectStore';
 import { useUiStore } from '../../stores/uiStore';
 
 export function MixerPanel() {
   const project = useProjectStore((state) => state.currentProject);
   const updateTrack = useProjectStore((state) => state.updateTrack);
+  const setMasterVolume = useProjectStore((state) => state.setMasterVolume);
   const setEffectsTrackId = useUiStore((state) => state.setEffectsTrackId);
-  const soloIds = project.tracks.filter((track) => track.solo).map((track) => track.id);
+  const meterRefs = useRef(new Map<string, HTMLDivElement>());
+  const holds = useRef(new Map<string, { value: number; until: number; last: number; clippedSince: number | null }>());
+
+  useEffect(() => {
+    let frame = 0;
+    const update = (now: number) => {
+      const levels = trackScheduler.getMeters();
+      levels.master = trackScheduler.getMasterLevel();
+      for (const [id, element] of meterRefs.current) {
+        const level = levels[id] ?? 0;
+        const db = level > 0 ? 20 * Math.log10(level) : -60;
+        const current = Math.max(0, Math.min(1, (db + 60) / 60));
+        const hold = holds.current.get(id) ?? { value: 0, until: 0, last: now, clippedSince: null };
+        if (current >= hold.value) {
+          hold.value = current;
+          hold.until = now + 800;
+        } else if (now > hold.until) {
+          hold.value = Math.max(current, hold.value - (now - hold.last) / 750);
+        }
+        hold.clippedSince = level >= 0.99 ? hold.clippedSince ?? now : null;
+        hold.last = now;
+        holds.current.set(id, hold);
+        element.style.transform = `scaleY(${hold.value})`;
+        element.classList.toggle('bg-studio-record', hold.clippedSince !== null && now - hold.clippedSince >= 200);
+        element.classList.toggle('bg-studio-success', hold.clippedSince === null || now - hold.clippedSince < 200);
+      }
+      frame = requestAnimationFrame(update);
+    };
+    const unsubscribe = audioEngine.subscribe((state) => {
+      cancelAnimationFrame(frame);
+      if (state.playing || state.recording) {
+        frame = requestAnimationFrame(update);
+      } else {
+        holds.current.clear();
+        for (const element of meterRefs.current.values()) element.style.transform = 'scaleY(0)';
+      }
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      unsubscribe();
+    };
+  }, []);
 
   return (
     <div className="studio-scrollbar flex h-full gap-3 overflow-x-auto p-4 pb-28">
       {project.tracks.map((track) => {
-        const audible = !track.mute && (!soloIds.length || soloIds.includes(track.id));
         return (
           <section key={track.id} className="flex min-w-36 flex-col rounded-panel border border-studio-border bg-studio-surface p-3">
             <div className="flex items-center gap-2">
@@ -34,8 +78,12 @@ export function MixerPanel() {
               </label>
               <div className="h-40 w-5 overflow-hidden rounded-full bg-studio-bg">
                 <div
-                  className={`mt-auto w-full rounded-full ${audible ? 'bg-studio-success' : 'bg-studio-border'}`}
-                  style={{ height: `${audible ? Math.max(8, track.volume) : 4}%` }}
+                  ref={(element) => {
+                    if (element) meterRefs.current.set(track.id, element);
+                    else meterRefs.current.delete(track.id);
+                  }}
+                  className="h-full w-full origin-bottom rounded-full bg-studio-success"
+                  style={{ transform: 'scaleY(0)' }}
                 />
               </div>
             </div>
@@ -82,8 +130,31 @@ export function MixerPanel() {
       })}
       <section className="flex min-w-32 flex-col rounded-panel border border-studio-accent/40 bg-studio-accent/10 p-3">
         <h3 className="text-body font-semibold text-studio-text">마스터</h3>
-        <p className="mt-2 text-micro text-studio-muted">찢어지는 소리를 막는 보호 장치가 켜져 있어요.</p>
-        <div className="mt-auto h-32 rounded-full bg-studio-accent/40" />
+        <div className="mt-3 flex flex-1 items-end justify-center gap-4">
+          <label className="flex h-52 flex-col items-center justify-end gap-2 text-micro text-studio-muted">
+            <input
+              aria-label="마스터 소리 크기"
+              type="range"
+              min={0}
+              max={100}
+              value={project.masterVolume}
+              onPointerDown={() => useProjectStore.getState().beginHistory()}
+              onChange={(event) => setMasterVolume(Number(event.target.value), false)}
+              className="h-36 w-8 -rotate-90"
+            />
+            소리 크기
+          </label>
+          <div className="h-40 w-5 overflow-hidden rounded-full bg-studio-bg">
+            <div
+              ref={(element) => {
+                if (element) meterRefs.current.set('master', element);
+                else meterRefs.current.delete('master');
+              }}
+              className="h-full w-full origin-bottom rounded-full bg-studio-success"
+              style={{ transform: 'scaleY(0)' }}
+            />
+          </div>
+        </div>
       </section>
     </div>
   );

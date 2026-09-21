@@ -50,12 +50,13 @@ export type Track = {
 };
 
 export type Project = {
-  version: 1;
+  version: 2;
   id: string;
   name: string;
   createdAt: number;
   updatedAt: number;
   bpm: number;
+  masterVolume: number;
   key: string;
   timeSignature: [4, 4];
   loopLengthBars: 4 | 8 | 16;

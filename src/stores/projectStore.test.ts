@@ -17,6 +17,7 @@ beforeEach(() => {
 describe('project store', () => {
   it('starts hiphop at 90 BPM', () => expect(createStarterProject('hiphop').bpm).toBe(90));
   it('starts with two tracks', () => expect(createStarterProject('hiphop').tracks).toHaveLength(2));
+  it('starts with a saved master level', () => expect(createStarterProject('hiphop').masterVolume).toBe(80));
   it('allows six additional tracks and caps the total at eight', () => {
     const results = Array.from({ length: 7 }, () => useProjectStore.getState().addTrack('audio'));
     expect(results.slice(0, 6).every(Boolean)).toBe(true);

@@ -17,6 +17,7 @@ export type TrackNode = {
 
 type GraphOptions = {
   limiter?: Tone.Limiter;
+  masterInput?: Tone.Volume;
   schedule?: boolean;
 };
 
@@ -25,8 +26,9 @@ export async function buildRenderGraph(
   ctx: Tone.BaseContext,
   buffers: Map<string, Tone.ToneAudioBuffer>,
   options: GraphOptions = {},
-): Promise<{ limiter: Tone.Limiter; nodes: Map<string, TrackNode> }> {
+): Promise<{ limiter: Tone.Limiter; masterInput: Tone.Volume; nodes: Map<string, TrackNode> }> {
   const limiter = options.limiter ?? new Tone.Limiter(-1).toDestination();
+  const masterInput = options.masterInput ?? new Tone.Volume(volumeToDb(project.masterVolume)).connect(limiter);
   const nodes = new Map<string, TrackNode>();
   for (const track of project.tracks) {
     const eq = new Tone.EQ3({ low: 0, mid: 0, high: 0 });
@@ -35,7 +37,7 @@ export async function buildRenderGraph(
     const reverb = new Tone.Reverb({ decay: track.effects.reverb.mode === 'hall' ? 2.8 : 1.1, wet: 0 });
     const channel = new Tone.Channel({ volume: volumeToDb(track.volume), pan: track.pan });
     const meter = new Tone.Meter({ normalRange: true });
-    eq.chain(compressor, delay, reverb, channel, limiter);
+    eq.chain(compressor, delay, reverb, channel, masterInput);
     channel.connect(meter);
     const node = { channel, delay, reverb, eq, compressor, meter };
     applyTrackSettings(track, node, project.tracks.some((item) => item.solo));
@@ -52,7 +54,7 @@ export async function buildRenderGraph(
     }
     ctx.transport.start(0);
   }
-  return { limiter, nodes };
+  return { limiter, masterInput, nodes };
 }
 
 export function applyTrackSettings(track: Track, node: TrackNode, hasSolo: boolean): void {

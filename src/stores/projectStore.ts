@@ -56,12 +56,13 @@ export function createStarterProject(genre: LoopGenre = 'hiphop'): Project {
 
   const bpmByGenre: Record<LoopGenre, number> = { hiphop: 90, pop: 104, edm: 124 };
   return {
-    version: 1,
+    version: 2,
     id: createId('project'),
     name: `${genre === 'hiphop' ? '힙합' : genre === 'pop' ? '팝' : 'EDM'} 스케치`,
     createdAt: now,
     updatedAt: now,
     bpm: bpmByGenre[genre],
+    masterVolume: 80,
     key: 'Cm',
     timeSignature: [4, 4],
     loopLengthBars: 8,
@@ -96,6 +97,7 @@ type ProjectStore = {
   selectTrack: (trackId: string | null) => void;
   selectClip: (clipId: string | null) => void;
   setBpm: (bpm: number) => void;
+  setMasterVolume: (volume: number, withHistory?: boolean) => void;
   setLoopLength: (bars: 4 | 8 | 16) => void;
   beginHistory: () => void;
   undo: () => void;
@@ -252,6 +254,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   setBpm(bpm) {
     mutateProject(set, get, (project) => ({ ...project, bpm: Math.min(200, Math.max(60, bpm)) }));
+  },
+
+  setMasterVolume(volume, withHistory = true) {
+    mutateProject(set, get, (project) => ({ ...project, masterVolume: Math.min(100, Math.max(0, volume)) }), withHistory);
   },
 
   setLoopLength(bars) {

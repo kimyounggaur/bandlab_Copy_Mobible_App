@@ -6,6 +6,7 @@ import { barsToSeconds, barsToTonePosition, clamp, formatBarBeat, toneToBars } f
 type EngineState = {
   initialized: boolean;
   playing: boolean;
+  recording: boolean;
   needsResume: boolean;
   bpm: number;
   loopLengthBars: 4 | 8 | 16;
@@ -18,6 +19,7 @@ class AudioEngine {
   private state: EngineState = {
     initialized: false,
     playing: false,
+    recording: false,
     needsResume: false,
     bpm: 90,
     loopLengthBars: 8,
@@ -81,6 +83,11 @@ class AudioEngine {
   pause() {
     this.transport.pause();
     this.state.playing = false;
+    this.emit();
+  }
+
+  setRecording(recording: boolean) {
+    this.state.recording = recording;
     this.emit();
   }
 

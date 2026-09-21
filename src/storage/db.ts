@@ -33,7 +33,17 @@ export async function saveProject(project: Project) {
 
 export async function loadProjects() {
   const db = await dbPromise;
-  return (await db.getAllFromIndex('projects', 'by-updated')).sort((a, b) => b.updatedAt - a.updatedAt);
+  return (await db.getAllFromIndex('projects', 'by-updated'))
+    .map(migrateProject)
+    .sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+export function migrateProject(project: Project): Project {
+  const stored = project as Project & { version: number; masterVolume?: number };
+  if (stored.version < 2 || typeof stored.masterVolume !== 'number') {
+    return { ...stored, version: 2, masterVolume: 80 };
+  }
+  return project;
 }
 
 export async function deleteProject(projectId: string) {
