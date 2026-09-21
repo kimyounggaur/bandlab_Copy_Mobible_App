@@ -208,7 +208,10 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
   const updateClip = useProjectStore((state) => state.updateClip);
   const duplicateClip = useProjectStore((state) => state.duplicateClip);
   const removeClip = useProjectStore((state) => state.removeClip);
+  const beginHistory = useProjectStore((state) => state.beginHistory);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [timingMs, setTimingMs] = useState(0);
+  const timingBaseRef = useRef(0);
   const dragRef = useRef<{
     startX: number;
     startBar: number;
@@ -229,6 +232,12 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
 
   const visibleBuckets = clip.lengthBars * barWidth < 200 ? 24 : 96;
   const peakPath = peaks ? makePeakPath(peaks, visibleBuckets) : null;
+
+  function openMenu() {
+    timingBaseRef.current = clip.source.kind === 'recording' ? clip.source.offsetSec : 0;
+    setTimingMs(0);
+    setMenuOpen(true);
+  }
 
   function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -287,7 +296,7 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
-        onDoubleClick={() => setMenuOpen(true)}
+        onDoubleClick={openMenu}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
@@ -296,12 +305,12 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
           }
           if (event.key === 'Delete' || event.key === 'Backspace') {
             event.preventDefault();
-            setMenuOpen(true);
+            openMenu();
           }
         }}
         onContextMenu={(event) => {
           event.preventDefault();
-          setMenuOpen(true);
+          openMenu();
         }}
         className={`absolute top-3 flex h-12 touch-none select-none items-center overflow-hidden rounded-studio border px-3 text-left text-micro font-semibold shadow-sm ${
           selected ? 'border-white ring-2 ring-studio-accent' : 'border-white/10'
@@ -327,7 +336,28 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
         <div className="fixed inset-0 z-40 grid place-items-center bg-black/50 px-6" role="dialog" aria-label="클립 메뉴">
           <div className="w-full max-w-sm rounded-panel border border-studio-border bg-studio-surface p-4">
             <h3 className="text-title font-semibold text-studio-text">{clip.name}</h3>
-            <p className="mt-1 text-body text-studio-muted">복제하거나 삭제할 수 있어요.</p>
+            {clip.source.kind === 'recording' && (
+              <label className="mt-4 block text-micro text-studio-muted">
+                타이밍 맞추기 {timingMs}ms
+                <input
+                  aria-label="녹음 타이밍 맞추기"
+                  type="range"
+                  min={-200}
+                  max={200}
+                  value={timingMs}
+                  onPointerDown={beginHistory}
+                  onChange={(event) => {
+                    if (clip.source.kind !== 'recording') return;
+                    const value = Number(event.target.value);
+                    setTimingMs(value);
+                    updateClip(track.id, clip.id, {
+                      source: { kind: 'recording', audioId: clip.source.audioId, offsetSec: timingBaseRef.current + value / 1000 },
+                    }, false);
+                  }}
+                  className="mt-2 w-full"
+                />
+              </label>
+            )}
             <div className="mt-4 grid grid-cols-2 gap-2">
               <IconButton
                 label="클립 복제"

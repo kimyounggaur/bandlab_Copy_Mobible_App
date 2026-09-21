@@ -1,8 +1,30 @@
 import * as Tone from 'tone';
 import { loadMeta, saveMeta } from '../storage/db';
+import type { MicRecorder } from './recorder';
 
 const metaKey = 'latency-pipeline';
+const calibrationKey = 'latency-calibration';
+export type LatencyCalibration = { L: number; method: 'clap' | 'speaker'; measuredAt: number; deviation: number };
 let measurement: Promise<number> | null = null;
+
+export async function getLatencyCalibration(): Promise<LatencyCalibration | null> {
+  const value = await loadMeta<LatencyCalibration>(calibrationKey);
+  return value && Number.isFinite(value.L) ? value : null;
+}
+
+export async function saveLatencyCalibration(value: LatencyCalibration): Promise<void> {
+  await saveMeta(calibrationKey, value);
+}
+
+export async function getRecordingLatency(recorder: MicRecorder): Promise<number> {
+  const calibrated = await getLatencyCalibration().catch(() => null);
+  if (calibrated) return calibrated.L;
+  const raw = Tone.getContext().rawContext as AudioContext & { outputLatency?: number };
+  const outputLatency = typeof raw.outputLatency === 'number' ? raw.outputLatency : raw.baseLatency ?? 0;
+  const inputLatency = recorder.getInputLatency();
+  const pipelineLatency = await getPipelineLatency().catch(() => 0);
+  return outputLatency + inputLatency + pipelineLatency;
+}
 
 export async function getPipelineLatency(): Promise<number> {
   const saved = await loadMeta<number>(metaKey);

@@ -11,6 +11,7 @@ type EngineState = {
   bpm: number;
   loopLengthBars: 4 | 8 | 16;
   metronome: boolean;
+  countInRemaining: number | null;
 };
 
 class AudioEngine {
@@ -24,11 +25,14 @@ class AudioEngine {
     bpm: 90,
     loopLengthBars: 8,
     metronome: false,
+    countInRemaining: null,
   };
 
   private clickSynth: Tone.Synth | null = null;
   private metronomeEventId: number | null = null;
-  private countInEventId: number | null = null;
+  private countInSources: OscillatorNode[] = [];
+  private countInTimers: number[] = [];
+  private countInStartTime: number | null = null;
   private listeners = new Set<(state: EngineState) => void>();
 
   constructor() {
@@ -74,6 +78,7 @@ class AudioEngine {
       this.emit();
       return false;
     }
+    this.cancelCountIn();
     this.transport.start('+0.02');
     this.state.playing = true;
     this.emit();
@@ -81,6 +86,7 @@ class AudioEngine {
   }
 
   pause() {
+    this.cancelCountIn();
     this.transport.pause();
     this.state.playing = false;
     this.emit();
@@ -139,28 +145,62 @@ class AudioEngine {
     this.emit();
   }
 
-  async startWithCountIn(bars = 1, onComplete?: () => void) {
+  async startWithCountIn(bars = 1, startBar = this.getPositionInBars(), onComplete?: () => void): Promise<number> {
     await this.ensureReady();
     this.cancelCountIn();
+    this.transport.stop();
+    this.transport.position = barsToTonePosition(startBar);
+    const raw = Tone.getContext().rawContext;
+    const beatSeconds = 60 / this.state.bpm;
     const totalBeats = bars * 4;
-    let beat = 0;
-    this.countInEventId = this.transport.scheduleRepeat((time) => {
-      this.clickSynth?.triggerAttackRelease(beat % 4 === 0 ? 'C6' : 'C5', '32n', time);
-      beat += 1;
-      if (beat >= totalBeats) {
-        this.cancelCountIn();
-        onComplete?.();
-      }
-    }, '4n', this.transport.position);
-    this.transport.start();
-    this.state.playing = true;
+    const t0 = raw.currentTime + 0.08;
+    const startTime = t0 + totalBeats * beatSeconds;
+    for (let beat = 0; beat < totalBeats; beat += 1) {
+      const time = t0 + beat * beatSeconds;
+      const oscillator = raw.createOscillator();
+      const gain = raw.createGain();
+      oscillator.frequency.value = beat % 4 === 0 ? 1320 : 880;
+      gain.gain.setValueAtTime(0.0001, time);
+      gain.gain.exponentialRampToValueAtTime(0.14, time + 0.001);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.045);
+      oscillator.connect(gain).connect(raw.destination);
+      oscillator.start(time);
+      oscillator.stop(time + 0.05);
+      oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
+      this.countInSources.push(oscillator);
+      this.countInTimers.push(window.setTimeout(() => {
+        this.state.countInRemaining = totalBeats - beat;
+        this.emit();
+      }, Math.max(0, (time - raw.currentTime) * 1000)));
+    }
+    this.countInStartTime = startTime;
+    this.state.countInRemaining = totalBeats;
+    this.transport.start(startTime, barsToTonePosition(startBar));
+    this.countInTimers.push(window.setTimeout(() => {
+      this.countInStartTime = null;
+      this.countInSources = [];
+      this.countInTimers = [];
+      this.state.countInRemaining = null;
+      this.state.playing = true;
+      this.emit();
+      onComplete?.();
+    }, Math.max(0, (startTime - raw.currentTime) * 1000)));
     this.emit();
+    return startTime;
   }
 
   cancelCountIn() {
-    if (this.countInEventId !== null) {
-      this.transport.clear(this.countInEventId);
-      this.countInEventId = null;
+    if (this.countInStartTime !== null) this.transport.stop();
+    for (const timer of this.countInTimers) window.clearTimeout(timer);
+    for (const source of this.countInSources) {
+      try { source.stop(Tone.immediate()); } catch { /* already ended */ }
+    }
+    this.countInTimers = [];
+    this.countInSources = [];
+    this.countInStartTime = null;
+    if (this.state.countInRemaining !== null) {
+      this.state.countInRemaining = null;
+      this.emit();
     }
   }
 

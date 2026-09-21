@@ -30,3 +30,14 @@ Measured at commit `324d578` before the R0 source changes.
 | Desktop Chromium offline uncached loop | Addition blocked; sheet remained open |
 | iOS Safari / Android Chrome sample alignment | Not measured on physical devices |
 | Fast 3G first sound / low-end Android 8-track load | Not measured on physical devices |
+
+## M2 recording (2026-09-21)
+
+| Metric | Result |
+|---|---:|
+| Recording anchor, pre-roll and quarter-bar placement tests | Passed |
+| Eight-click calibration median analysis test | Passed |
+| Browser count-in transport isolation and cancel | Passed (desktop Chromium) |
+| Mobile-size recording sheet layout | Inspected at 390 x 844 |
+| Headless browser microphone | No device; recording returned an error |
+| Wired/Bluetooth clap alignment, live monitoring and feedback cutoff | Not measured on physical devices |
