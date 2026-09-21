@@ -28,7 +28,7 @@ export function InstrumentsPanel() {
     const synth = new Tone.PolySynth(Tone.Synth, { volume: -10 }).toDestination();
     synth.triggerAttackRelease(note, '8n');
     if (recording) {
-      setEvents((items) => [...items, { t: Tone.Transport.position.toString(), note, dur: '8n' }]);
+      setEvents((items) => [...items, { t: Tone.getTransport().position.toString(), note, dur: '8n' }]);
     }
     window.setTimeout(() => synth.dispose(), 700);
   }

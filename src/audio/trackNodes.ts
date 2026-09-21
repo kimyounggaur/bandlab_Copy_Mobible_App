@@ -1,8 +1,9 @@
 import * as Tone from 'tone';
+import { audioEngine } from './engine';
 import { getBuffer, peekBuffer } from './bufferCache';
 import { getLoop } from '../data/loopManifest';
 import type { Clip, Project, Track } from '../types/project';
-import { barsToSeconds, volumeToDb } from '../utils/music';
+import { barsToSeconds, barsToTonePosition, volumeToDb } from '../utils/music';
 
 type TrackNode = {
   channel: Tone.Channel;
@@ -64,14 +65,11 @@ class TrackScheduler {
   applyTransport(project: Project): void {
     if (this.bpm !== project.bpm) {
       this.bpm = project.bpm;
-      Tone.Transport.bpm.rampTo(project.bpm, 0.02);
       for (const schedule of this.clips.values()) {
         for (const source of schedule.active) source.playbackRate.rampTo(project.bpm / 90, 0.02);
       }
     }
-    Tone.Transport.loop = true;
-    Tone.Transport.loopStart = 0;
-    Tone.Transport.loopEnd = `${project.loopLengthBars}m`;
+    audioEngine.applyProjectTransport(project);
   }
 
   reconcileClips(track: Track): void {
@@ -93,7 +91,7 @@ class TrackScheduler {
         const startBar = clip.startBar + index * loop.bars;
         const segmentBars = Math.min(loop.bars, clip.startBar + clip.lengthBars - startBar);
         if (segmentBars <= 0) continue;
-        const eventId = Tone.Transport.schedule((time) => {
+        const eventId = Tone.getTransport().schedule((time) => {
           const audioBuffer = peekBuffer(loop.filePath);
           if (!audioBuffer) return;
           const source = new Tone.ToneBufferSource({
@@ -169,7 +167,7 @@ class TrackScheduler {
   private clearClip(clipId: string): void {
     const schedule = this.clips.get(clipId);
     if (!schedule) return;
-    for (const eventId of schedule.events) Tone.Transport.clear(eventId);
+    for (const eventId of schedule.events) Tone.getTransport().clear(eventId);
     for (const source of schedule.active) source.stop(Tone.immediate() + 0.005);
     this.clips.delete(clipId);
   }
@@ -199,14 +197,6 @@ class TrackScheduler {
   private clipHash(clip: Clip): string {
     return JSON.stringify([clip.id, clip.startBar, clip.lengthBars, clip.source, clip.gain]);
   }
-}
-
-function barsToTonePosition(positionBars: number): string {
-  const bar = Math.floor(positionBars);
-  const beatFloat = (positionBars - bar) * 4;
-  const beat = Math.floor(beatFloat);
-  const sixteenth = Math.round((beatFloat - beat) * 4);
-  return `${bar}:${beat}:${sixteenth}`;
 }
 
 export const trackScheduler = new TrackScheduler();

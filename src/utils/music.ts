@@ -32,3 +32,16 @@ export function volumeToDb(volume: number) {
 export function barsToSeconds(bars: number, bpm: number) {
   return bars * 4 * (60 / bpm);
 }
+
+export function barsToTonePosition(positionBars: number) {
+  const bar = Math.floor(positionBars);
+  const beatFloat = (positionBars - bar) * 4;
+  const beat = Math.floor(beatFloat);
+  const sixteenth = Math.round((beatFloat - beat) * 4);
+  return `${bar}:${beat}:${sixteenth}`;
+}
+
+export function toneToBars(position: string) {
+  const [bar = 0, beat = 0, sixteenth = 0] = position.split(':').map(Number);
+  return bar + beat / 4 + sixteenth / 16;
+}

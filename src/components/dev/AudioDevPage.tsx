@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { audioEngine } from '../../audio/engine';
+import { useProjectStore } from '../../stores/projectStore';
 import { formatBarBeat } from '../../utils/music';
 
 export function AudioDevPage() {
@@ -44,7 +45,7 @@ export function AudioDevPage() {
             min={60}
             max={200}
             value={state.bpm}
-            onChange={(event) => audioEngine.setBpm(Number(event.target.value))}
+            onChange={(event) => useProjectStore.getState().setBpm(Number(event.target.value))}
             className="mt-2 w-full"
           />
         </label>
@@ -53,6 +54,15 @@ export function AudioDevPage() {
           onClick={() => audioEngine.setMetronome(!state.metronome)}
         >
           메트로놈 {state.metronome ? '끄기' : '켜기'}
+        </button>
+        <button
+          className="min-h-12 rounded-studio bg-studio-card"
+          onClick={() => {
+            const until = performance.now() + 400;
+            while (performance.now() < until) { /* intentional diagnostic stall */ }
+          }}
+        >
+          메인 스레드 400ms 정지
         </button>
         <p className="rounded-panel border border-studio-border bg-studio-card p-4 text-title">현재 위치 {formatBarBeat(position)}</p>
       </div>

@@ -22,11 +22,6 @@ export function TransportBar({ positionBars, onRecord, onToast }: TransportBarPr
 
   useEffect(() => audioEngine.subscribe(setEngineState), []);
 
-  useEffect(() => {
-    audioEngine.setBpm(project.bpm);
-    audioEngine.setLoopLength(project.loopLengthBars);
-  }, [project.bpm, project.loopLengthBars]);
-
   async function togglePlay() {
     if (!engineState.initialized || engineState.needsResume) {
       await audioEngine.ensureReady();

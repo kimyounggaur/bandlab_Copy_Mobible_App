@@ -67,7 +67,11 @@ export default function App() {
     const unsubscribeProject = useProjectStore.subscribe((state, previous) => {
       if (state.currentProject !== previous.currentProject) sync();
     });
-    const unsubscribeEngine = audioEngine.subscribe(sync);
+    let wasInitialized = false;
+    const unsubscribeEngine = audioEngine.subscribe((state) => {
+      if (state.initialized && !wasInitialized) sync();
+      wasInitialized = state.initialized;
+    });
     return () => {
       unsubscribeProject();
       unsubscribeEngine();

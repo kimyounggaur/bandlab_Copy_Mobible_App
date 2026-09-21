@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { barsToSeconds, formatBarBeat, snapBar, volumeToDb } from './music';
+import { barsToSeconds, barsToTonePosition, formatBarBeat, snapBar, toneToBars, volumeToDb } from './music';
 
 describe('music helpers', () => {
   it('converts one bar at 120 BPM', () => expect(barsToSeconds(1, 120)).toBe(2));
@@ -11,4 +11,7 @@ describe('music helpers', () => {
   it('snaps 0.4 to a half bar', () => expect(snapBar(0.4)).toBe(0.5));
   it('formats bar zero', () => expect(formatBarBeat(0)).toBe('1:1'));
   it('formats a half bar', () => expect(formatBarBeat(2.5)).toBe('3:3'));
+  it.each([0, 0.25, 1.5, 3.0625, 7.75])('round trips bar position %s', (bars) => {
+    expect(toneToBars(barsToTonePosition(bars))).toBe(bars);
+  });
 });

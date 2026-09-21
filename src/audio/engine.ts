@@ -1,5 +1,6 @@
 import * as Tone from 'tone';
-import { barsToSeconds, clamp, formatBarBeat } from '../utils/music';
+import type { Project } from '../types/project';
+import { barsToSeconds, barsToTonePosition, clamp, formatBarBeat, toneToBars } from '../utils/music';
 
 type EngineState = {
   initialized: boolean;
@@ -11,6 +12,8 @@ type EngineState = {
 };
 
 class AudioEngine {
+  private transport = Tone.getTransport();
+  // Project in the store is authoritative; these values mirror it for transport controls.
   private state: EngineState = {
     initialized: false,
     playing: false,
@@ -22,6 +25,7 @@ class AudioEngine {
 
   private clickSynth: Tone.Synth | null = null;
   private metronomeEventId: number | null = null;
+  private countInEventId: number | null = null;
   private listeners = new Set<(state: EngineState) => void>();
 
   constructor() {
@@ -45,11 +49,11 @@ class AudioEngine {
       envelope: { attack: 0.001, decay: 0.03, sustain: 0, release: 0.03 },
       volume: -10,
     }).toDestination();
-    Tone.Transport.PPQ = 192;
-    Tone.Transport.loop = true;
-    Tone.Transport.loopStart = 0;
-    Tone.Transport.loopEnd = `${this.state.loopLengthBars}m`;
-    Tone.Transport.bpm.value = this.state.bpm;
+    this.transport.PPQ = 192;
+    this.transport.loop = true;
+    this.transport.loopStart = 0;
+    this.transport.loopEnd = `${this.state.loopLengthBars}m`;
+    this.transport.bpm.value = this.state.bpm;
     this.state.initialized = true;
     this.state.needsResume = false;
     this.emit();
@@ -66,53 +70,60 @@ class AudioEngine {
       this.emit();
       return false;
     }
-    Tone.Transport.start('+0.02');
+    this.transport.start('+0.02');
     this.state.playing = true;
     this.emit();
     return true;
   }
 
   pause() {
-    Tone.Transport.pause();
+    this.transport.pause();
     this.state.playing = false;
     this.emit();
   }
 
   stop() {
-    Tone.Transport.stop();
-    Tone.Transport.position = 0;
+    this.cancelCountIn();
+    this.transport.stop();
+    this.transport.position = 0;
     this.state.playing = false;
     this.emit();
   }
 
   seek(positionBars: number) {
-    Tone.Transport.position = this.barsToTonePosition(positionBars);
+    this.transport.position = barsToTonePosition(positionBars);
     this.emit();
   }
 
   setBpm(bpm: number) {
     const next = clamp(bpm, 60, 200);
     this.state.bpm = next;
-    Tone.Transport.bpm.rampTo(next, 0.02);
+    this.transport.bpm.rampTo(next, 0.02);
     this.emit();
   }
 
   setLoopLength(loopLengthBars: 4 | 8 | 16) {
     this.state.loopLengthBars = loopLengthBars;
-    Tone.Transport.loopEnd = `${loopLengthBars}m`;
+    this.transport.loopEnd = `${loopLengthBars}m`;
     this.emit();
+  }
+
+  applyProjectTransport(project: Project) {
+    if (this.state.bpm !== project.bpm) this.setBpm(project.bpm);
+    if (this.state.loopLengthBars !== project.loopLengthBars) this.setLoopLength(project.loopLengthBars);
   }
 
   setMetronome(on: boolean) {
     this.state.metronome = on;
     if (this.metronomeEventId !== null) {
-      Tone.Transport.clear(this.metronomeEventId);
+      this.transport.clear(this.metronomeEventId);
       this.metronomeEventId = null;
     }
     if (on) {
-      this.metronomeEventId = Tone.Transport.scheduleRepeat((time) => {
-        const [, beat] = this.getPositionParts();
-        const note = beat === 0 ? 'C6' : 'C5';
+      this.metronomeEventId = this.transport.scheduleRepeat((time) => {
+        if (time < Tone.getContext().rawContext.currentTime - 0.05) return;
+        const beatInBar = Math.floor(this.transport.getTicksAtTime(time) / this.transport.PPQ) % 4;
+        const note = beatInBar === 0 ? 'C6' : 'C5';
         this.clickSynth?.triggerAttackRelease(note, '32n', time);
       }, '4n');
     }
@@ -121,22 +132,31 @@ class AudioEngine {
 
   async startWithCountIn(bars = 1, onComplete?: () => void) {
     await this.ensureReady();
+    this.cancelCountIn();
     const totalBeats = bars * 4;
     let beat = 0;
-    const eventId = Tone.Transport.scheduleRepeat((time) => {
+    this.countInEventId = this.transport.scheduleRepeat((time) => {
       this.clickSynth?.triggerAttackRelease(beat % 4 === 0 ? 'C6' : 'C5', '32n', time);
       beat += 1;
       if (beat >= totalBeats) {
-        Tone.Transport.clear(eventId);
+        this.cancelCountIn();
         onComplete?.();
       }
-    }, '4n', Tone.Transport.position);
-    Tone.Transport.start();
+    }, '4n', this.transport.position);
+    this.transport.start();
+    this.state.playing = true;
+    this.emit();
+  }
+
+  cancelCountIn() {
+    if (this.countInEventId !== null) {
+      this.transport.clear(this.countInEventId);
+      this.countInEventId = null;
+    }
   }
 
   getPositionInBars() {
-    const [bars, beats, sixteenths] = this.getPositionParts();
-    return bars + beats / 4 + sixteenths / 16;
+    return toneToBars(String(this.transport.position));
   }
 
   getPositionLabel() {
@@ -158,21 +178,6 @@ class AudioEngine {
   private emit() {
     const snapshot = { ...this.state };
     this.listeners.forEach((listener) => listener(snapshot));
-  }
-
-  private getPositionParts(): [number, number, number] {
-    const [bars = 0, beats = 0, sixteenths = 0] = String(Tone.Transport.position)
-      .split(':')
-      .map((part) => Number.parseFloat(part));
-    return [bars, beats, sixteenths];
-  }
-
-  private barsToTonePosition(positionBars: number) {
-    const bar = Math.floor(positionBars);
-    const beatFloat = (positionBars - bar) * 4;
-    const beat = Math.floor(beatFloat);
-    const sixteenth = Math.round((beatFloat - beat) * 4);
-    return `${bar}:${beat}:${sixteenth}`;
   }
 
   barDurationSeconds() {
