@@ -13,9 +13,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_01.flac",
         "wav": "/loops/drums_01.wav"
       },
-      "hash": "1c0e98d0381c",
+      "hash": "02107ac6a159",
+      "bytes": 53341,
       "starter": true,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -39,9 +41,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_02.flac",
         "wav": "/loops/drums_02.wav"
       },
-      "hash": "2b20c1da6b24",
+      "hash": "c97044275c26",
+      "bytes": 53530,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -65,9 +69,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_03.flac",
         "wav": "/loops/drums_03.wav"
       },
-      "hash": "40f0bd52ec7b",
+      "hash": "171c0ca6181a",
+      "bytes": 54207,
       "starter": true,
       "mood": "경쾌한",
       "license": "CC0-generated",
@@ -91,9 +97,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_04.flac",
         "wav": "/loops/drums_04.wav"
       },
-      "hash": "078e57f4182f",
+      "hash": "35876c9422b4",
+      "bytes": 79096,
       "starter": true,
       "mood": "빠른",
       "license": "CC0-generated",
@@ -117,9 +125,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_05.flac",
         "wav": "/loops/drums_05.wav"
       },
-      "hash": "36d08e8bc084",
+      "hash": "23bec9594128",
+      "bytes": 53578,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -143,9 +153,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_06.flac",
         "wav": "/loops/drums_06.wav"
       },
-      "hash": "f8c5e4f6f77c",
+      "hash": "84e2db7109fd",
+      "bytes": 54625,
       "starter": false,
       "mood": "경쾌한",
       "license": "CC0-generated",
@@ -169,9 +181,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_07.flac",
         "wav": "/loops/drums_07.wav"
       },
-      "hash": "21a73443e3fb",
+      "hash": "bff51d7f3e1b",
+      "bytes": 53181,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -195,9 +209,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_08.flac",
         "wav": "/loops/drums_08.wav"
       },
-      "hash": "0748e5698e56",
+      "hash": "2fd0db1f7bbf",
+      "bytes": 79054,
       "starter": false,
       "mood": "빠른",
       "license": "CC0-generated",
@@ -221,9 +237,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_09.flac",
         "wav": "/loops/drums_09.wav"
       },
-      "hash": "bf4fa465018e",
+      "hash": "eb513162b9ce",
+      "bytes": 54867,
       "starter": false,
       "mood": "경쾌한",
       "license": "CC0-generated",
@@ -247,9 +265,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_10.flac",
         "wav": "/loops/drums_10.wav"
       },
-      "hash": "2461fc5166e0",
+      "hash": "51772e1d1e44",
+      "bytes": 53072,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -273,9 +293,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_11.flac",
         "wav": "/loops/drums_11.wav"
       },
-      "hash": "1eb2c6ae3c46",
+      "hash": "2d1dd69d580c",
+      "bytes": 53460,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -299,9 +321,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_12.flac",
         "wav": "/loops/drums_12.wav"
       },
-      "hash": "4e3d3ec47d51",
+      "hash": "83ef3c879aff",
+      "bytes": 80852,
       "starter": false,
       "mood": "빠른",
       "license": "CC0-generated",
@@ -325,9 +349,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_13.flac",
         "wav": "/loops/drums_13.wav"
       },
-      "hash": "39db0d6d4561",
+      "hash": "ec20ae52246f",
+      "bytes": 52596,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -351,9 +377,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_14.flac",
         "wav": "/loops/drums_14.wav"
       },
-      "hash": "f92b0a6d69fb",
+      "hash": "c2272d3507f2",
+      "bytes": 53513,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -377,9 +405,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_15.flac",
         "wav": "/loops/drums_15.wav"
       },
-      "hash": "53a9dfdd61fd",
+      "hash": "984b16518c73",
+      "bytes": 55172,
       "starter": false,
       "mood": "경쾌한",
       "license": "CC0-generated",
@@ -403,9 +433,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/drums_16.flac",
         "wav": "/loops/drums_16.wav"
       },
-      "hash": "954ed1624b48",
+      "hash": "92d62a9cf5a9",
+      "bytes": 78968,
       "starter": false,
       "mood": "빠른",
       "license": "CC0-generated",
@@ -429,9 +461,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/bass_01.flac",
         "wav": "/loops/bass_01.wav"
       },
-      "hash": "5ad2797df791",
+      "hash": "f2d0b8bda57b",
+      "bytes": 238916,
       "starter": true,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -461,9 +495,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/bass_02.flac",
         "wav": "/loops/bass_02.wav"
       },
-      "hash": "0460e3a46fe3",
+      "hash": "50bb6c8c8713",
+      "bytes": 239078,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -493,9 +529,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/bass_03.flac",
         "wav": "/loops/bass_03.wav"
       },
-      "hash": "ce13e1c1fa34",
+      "hash": "53e8e3fe9eee",
+      "bytes": 232583,
       "starter": true,
       "mood": "경쾌한",
       "license": "CC0-generated",
@@ -525,9 +563,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/bass_04.flac",
         "wav": "/loops/bass_04.wav"
       },
-      "hash": "a0af5a1cb95a",
+      "hash": "b50eae47593c",
+      "bytes": 222391,
       "starter": true,
       "mood": "빠른",
       "license": "CC0-generated",
@@ -557,9 +597,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/bass_05.flac",
         "wav": "/loops/bass_05.wav"
       },
-      "hash": "eda7360edcc0",
+      "hash": "a25135e6d367",
+      "bytes": 239209,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -589,9 +631,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/bass_06.flac",
         "wav": "/loops/bass_06.wav"
       },
-      "hash": "1013345d69f7",
+      "hash": "6381d5a81771",
+      "bytes": 232161,
       "starter": false,
       "mood": "경쾌한",
       "license": "CC0-generated",
@@ -621,9 +665,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/bass_07.flac",
         "wav": "/loops/bass_07.wav"
       },
-      "hash": "951ca92f924a",
+      "hash": "98d7c48712ee",
+      "bytes": 238965,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -653,9 +699,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/bass_08.flac",
         "wav": "/loops/bass_08.wav"
       },
-      "hash": "91fc735048eb",
+      "hash": "302fa60ec74b",
+      "bytes": 223176,
       "starter": false,
       "mood": "빠른",
       "license": "CC0-generated",
@@ -685,9 +733,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/bass_09.flac",
         "wav": "/loops/bass_09.wav"
       },
-      "hash": "7ead785ece6f",
+      "hash": "b609c3e0f693",
+      "bytes": 231906,
       "starter": false,
       "mood": "경쾌한",
       "license": "CC0-generated",
@@ -717,9 +767,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/bass_10.flac",
         "wav": "/loops/bass_10.wav"
       },
-      "hash": "0460e3a46fe3",
+      "hash": "50bb6c8c8713",
+      "bytes": 239078,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -749,9 +801,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/bass_11.flac",
         "wav": "/loops/bass_11.wav"
       },
-      "hash": "08d87b7837f9",
+      "hash": "e95ce0bc317b",
+      "bytes": 239405,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -781,9 +835,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/bass_12.flac",
         "wav": "/loops/bass_12.wav"
       },
-      "hash": "a0af5a1cb95a",
+      "hash": "b50eae47593c",
+      "bytes": 222391,
       "starter": false,
       "mood": "빠른",
       "license": "CC0-generated",
@@ -813,9 +869,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/melody_01.flac",
         "wav": "/loops/melody_01.wav"
       },
-      "hash": "906667bc7e15",
+      "hash": "e71cebea31a6",
+      "bytes": 99633,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -845,9 +903,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/melody_02.flac",
         "wav": "/loops/melody_02.wav"
       },
-      "hash": "2e51936d3470",
+      "hash": "a2cf8023117c",
+      "bytes": 101547,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -877,9 +937,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/melody_03.flac",
         "wav": "/loops/melody_03.wav"
       },
-      "hash": "560c406e94bf",
+      "hash": "1edd10c492cf",
+      "bytes": 100571,
       "starter": false,
       "mood": "경쾌한",
       "license": "CC0-generated",
@@ -909,9 +971,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/melody_04.flac",
         "wav": "/loops/melody_04.wav"
       },
-      "hash": "76699da1d7f2",
+      "hash": "e09a8ac4488f",
+      "bytes": 101672,
       "starter": false,
       "mood": "빠른",
       "license": "CC0-generated",
@@ -941,9 +1005,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/melody_05.flac",
         "wav": "/loops/melody_05.wav"
       },
-      "hash": "2ad8e7ac6aa1",
+      "hash": "9ac31bb84873",
+      "bytes": 100601,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -973,9 +1039,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/melody_06.flac",
         "wav": "/loops/melody_06.wav"
       },
-      "hash": "14bfca46c42e",
+      "hash": "8f63a4261228",
+      "bytes": 101713,
       "starter": false,
       "mood": "경쾌한",
       "license": "CC0-generated",
@@ -1005,9 +1073,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/melody_07.flac",
         "wav": "/loops/melody_07.wav"
       },
-      "hash": "c94b60648e3f",
+      "hash": "afa6873fce44",
+      "bytes": 103561,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -1037,9 +1107,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/melody_08.flac",
         "wav": "/loops/melody_08.wav"
       },
-      "hash": "700badab93ab",
+      "hash": "ef732c78f597",
+      "bytes": 99746,
       "starter": false,
       "mood": "빠른",
       "license": "CC0-generated",
@@ -1069,9 +1141,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/melody_09.flac",
         "wav": "/loops/melody_09.wav"
       },
-      "hash": "906667bc7e15",
+      "hash": "e71cebea31a6",
+      "bytes": 99633,
       "starter": false,
       "mood": "경쾌한",
       "license": "CC0-generated",
@@ -1101,9 +1175,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/melody_10.flac",
         "wav": "/loops/melody_10.wav"
       },
-      "hash": "2e51936d3470",
+      "hash": "a2cf8023117c",
+      "bytes": 101547,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -1133,9 +1209,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/melody_11.flac",
         "wav": "/loops/melody_11.wav"
       },
-      "hash": "560c406e94bf",
+      "hash": "1edd10c492cf",
+      "bytes": 100571,
       "starter": false,
       "mood": "단단한",
       "license": "CC0-generated",
@@ -1165,9 +1243,11 @@
       "channels": 1,
       "frames": 235200,
       "files": {
+        "flac": "/loops/melody_12.flac",
         "wav": "/loops/melody_12.wav"
       },
-      "hash": "76699da1d7f2",
+      "hash": "e09a8ac4488f",
+      "bytes": 101672,
       "starter": false,
       "mood": "빠른",
       "license": "CC0-generated",
@@ -1197,9 +1277,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/fx_01.flac",
         "wav": "/loops/fx_01.wav"
       },
-      "hash": "3c8cbfa43e4e",
+      "hash": "90e9b3cf9948",
+      "bytes": 175578,
       "starter": false,
       "mood": "반짝이는",
       "license": "CC0-generated",
@@ -1220,9 +1302,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/fx_02.flac",
         "wav": "/loops/fx_02.wav"
       },
-      "hash": "152f810f69e7",
+      "hash": "505bd6e19cd5",
+      "bytes": 175623,
       "starter": false,
       "mood": "반짝이는",
       "license": "CC0-generated",
@@ -1243,9 +1327,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/fx_03.flac",
         "wav": "/loops/fx_03.wav"
       },
-      "hash": "15d1846f24b8",
+      "hash": "eaff882ecfa1",
+      "bytes": 175601,
       "starter": false,
       "mood": "반짝이는",
       "license": "CC0-generated",
@@ -1266,9 +1352,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/fx_04.flac",
         "wav": "/loops/fx_04.wav"
       },
-      "hash": "7b086a53fb59",
+      "hash": "4677d53d9c1e",
+      "bytes": 175586,
       "starter": false,
       "mood": "반짝이는",
       "license": "CC0-generated",
@@ -1289,9 +1377,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/fx_05.flac",
         "wav": "/loops/fx_05.wav"
       },
-      "hash": "e30338e72912",
+      "hash": "937bb4fdc497",
+      "bytes": 175606,
       "starter": false,
       "mood": "반짝이는",
       "license": "CC0-generated",
@@ -1312,9 +1402,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/fx_06.flac",
         "wav": "/loops/fx_06.wav"
       },
-      "hash": "4cf97c17ff81",
+      "hash": "8f47a4004cd8",
+      "bytes": 175618,
       "starter": false,
       "mood": "반짝이는",
       "license": "CC0-generated",
@@ -1335,9 +1427,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/fx_07.flac",
         "wav": "/loops/fx_07.wav"
       },
-      "hash": "2e263d449bca",
+      "hash": "1dc3155a60a3",
+      "bytes": 175555,
       "starter": false,
       "mood": "반짝이는",
       "license": "CC0-generated",
@@ -1358,9 +1452,11 @@
       "channels": 1,
       "frames": 117600,
       "files": {
+        "flac": "/loops/fx_08.flac",
         "wav": "/loops/fx_08.wav"
       },
-      "hash": "f76b08242c9a",
+      "hash": "5b5cdf570cdc",
+      "bytes": 175538,
       "starter": false,
       "mood": "반짝이는",
       "license": "CC0-generated",

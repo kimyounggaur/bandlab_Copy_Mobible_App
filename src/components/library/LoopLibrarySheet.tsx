@@ -1,6 +1,7 @@
 import { Headphones, Plus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { audioEngine } from '../../audio/engine';
+import { getLoopBuffer, isLoopCached } from '../../audio/bufferCache';
 import { loopPreview } from '../../audio/preview';
 import { loopManifest } from '../../data/loopManifest';
 import { useProjectStore } from '../../stores/projectStore';
@@ -37,6 +38,8 @@ export function LoopLibrarySheet({ onToast }: LoopLibrarySheetProps) {
   const [category, setCategory] = useState<LoopCategory | 'all'>('all');
   const [genre, setGenre] = useState<LoopGenre | 'all'>('all');
   const [previewingId, setPreviewingId] = useState<string | null>(null);
+  const [cachedIds, setCachedIds] = useState<Set<string>>(new Set());
+  const [downloading, setDownloading] = useState(false);
   useEffect(() => loopPreview.subscribe(setPreviewingId), []);
   useEffect(() => { if (!open) loopPreview.stop(); }, [open]);
   useEffect(() => () => loopPreview.stop(), []);
@@ -49,20 +52,80 @@ export function LoopLibrarySheet({ onToast }: LoopLibrarySheetProps) {
     [category, genre],
   );
 
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        observer.unobserve(entry.target);
+        const loop = loopManifest.find((item) => item.id === entry.target.getAttribute('data-loop-id'));
+        if (!loop) continue;
+        void isLoopCached(loop).then((cached) => {
+          if (cancelled || !cached) return;
+          setCachedIds((ids) => new Set(ids).add(loop.id));
+        });
+        if (navigator.onLine) {
+          void getLoopBuffer(loop).then(() => {
+            if (!cancelled) setCachedIds((ids) => new Set(ids).add(loop.id));
+          }).catch(() => undefined);
+        }
+      }
+    });
+    document.querySelectorAll('[data-loop-id]').forEach((card) => observer.observe(card));
+    return () => { cancelled = true; observer.disconnect(); };
+  }, [open, loops]);
+
   async function preview(loopId: string) {
     try {
+      const loop = loopManifest.find((item) => item.id === loopId);
+      if (!navigator.onLine && loop && !(await isLoopCached(loop))) {
+        onToast('인터넷에 연결되면 쓸 수 있어요');
+        return;
+      }
       await loopPreview.toggle(loopId);
     } catch {
-      onToast('미리듣기를 불러오지 못했어요');
+      onToast(navigator.onLine ? '미리듣기를 불러오지 못했어요' : '인터넷에 연결되면 쓸 수 있어요');
     }
   }
 
-  function add(loopId: string) {
+  async function add(loopId: string) {
+    const loop = loopManifest.find((item) => item.id === loopId);
+    if (!loop) return;
+    try {
+      if (!navigator.onLine && !(await isLoopCached(loop))) {
+        onToast('인터넷에 연결되면 쓸 수 있어요');
+        return;
+      }
+      await audioEngine.ensureReady();
+      await getLoopBuffer(loop);
+      setCachedIds((ids) => new Set(ids).add(loopId));
+    } catch {
+      onToast(navigator.onLine ? '루프를 불러오지 못했어요' : '인터넷에 연결되면 쓸 수 있어요');
+      return;
+    }
     loopPreview.stop();
     addLoop(loopId, audioEngine.getPositionInBars());
     localStorage.setItem('loop-pocket-first-loop', String(Date.now()));
     onToast(selectedTrackId ? '루프를 얹었어요' : '새 트랙을 만들고 루프를 얹었어요');
     setOpen(false);
+  }
+
+  async function downloadGenre() {
+    setDownloading(true);
+    const targets = genre === 'all' ? loopManifest : loopManifest.filter((loop) => loop.genre === genre);
+    try {
+      for (const loop of targets) {
+        // eslint-disable-next-line no-await-in-loop
+        await getLoopBuffer(loop);
+        setCachedIds((ids) => new Set(ids).add(loop.id));
+      }
+      onToast('루프를 받아뒀어요');
+    } catch {
+      onToast(navigator.onLine ? '일부 루프를 받지 못했어요' : '인터넷에 연결되면 받을 수 있어요');
+    } finally {
+      setDownloading(false);
+    }
   }
 
   return (
@@ -80,13 +143,22 @@ export function LoopLibrarySheet({ onToast }: LoopLibrarySheetProps) {
           value={genre}
           onChange={setGenre}
         />
+        <button
+          type="button"
+          disabled={downloading}
+          onClick={() => void downloadGenre()}
+          className="min-h-11 w-full rounded-studio border border-studio-border bg-studio-surface px-3 text-body text-studio-text disabled:opacity-50"
+        >
+          {downloading ? '받는 중...' : `${genre === 'all' ? '전체 루프' : genreLabels[genre]} 받아두기 · ${(loops.filter((loop) => !cachedIds.has(loop.id)).reduce((sum, loop) => sum + loop.bytes, 0) / 1024 / 1024).toFixed(1)}MB`}
+        </button>
         <div className="grid gap-3">
           {loops.map((loop) => (
-            <article key={loop.id} className="rounded-panel border border-studio-border bg-studio-card p-3">
+            <article key={loop.id} data-loop-id={loop.id} className="rounded-panel border border-studio-border bg-studio-card p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h3 className="truncate text-body font-semibold text-studio-text">{loop.name}</h3>
                   <p className="mt-1 text-micro text-studio-muted">
+                    <span aria-label={cachedIds.has(loop.id) ? '받음' : '안 받음'} className={`mr-1 inline-block size-1.5 rounded-full ${cachedIds.has(loop.id) ? 'bg-studio-accent' : 'bg-studio-muted'}`} />
                     {categoryLabels[loop.category]} · {genreLabels[loop.genre]} · {loop.bars}마디
                     {loop.key ? ` · ${loop.key}` : ''}
                   </p>

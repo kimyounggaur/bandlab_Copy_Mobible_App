@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { audioEngine } from '../../audio/engine';
+import { measureFormatAlignment, type AlignmentRow } from '../../audio/formatAlignment';
 import { measurePipelineLatency } from '../../audio/latency';
 import { useProjectStore } from '../../stores/projectStore';
 import { formatBarBeat } from '../../utils/music';
@@ -7,6 +8,8 @@ import { formatBarBeat } from '../../utils/music';
 export function AudioDevPage() {
   const [position, setPosition] = useState(0);
   const [state, setState] = useState(audioEngine.getState());
+  const [alignment, setAlignment] = useState<AlignmentRow[]>([]);
+  const [checkingFormats, setCheckingFormats] = useState(false);
 
   useEffect(() => audioEngine.subscribe(setState), []);
 
@@ -74,6 +77,35 @@ export function AudioDevPage() {
         >
           녹음 지연 다시 측정
         </button>
+        <button
+          disabled={checkingFormats}
+          className="min-h-12 rounded-studio bg-studio-card disabled:opacity-50"
+          onClick={async () => {
+            setCheckingFormats(true);
+            try {
+              await audioEngine.ensureReady();
+              setAlignment(await measureFormatAlignment());
+            } finally {
+              setCheckingFormats(false);
+            }
+          }}
+        >
+          {checkingFormats ? '검사 중...' : '포맷 정렬 검사'}
+        </button>
+        {alignment.length > 0 && (
+          <table className="w-full text-left text-micro">
+            <thead><tr><th>루프</th><th>포맷</th><th>시작 오프셋</th><th>길이 차이</th></tr></thead>
+            <tbody>
+              {alignment.map((row) => (
+                <tr key={`${row.loopId}-${row.format}`}>
+                  <td>{row.loopId}</td><td>{row.format}</td>
+                  <td>{row.error ?? `${row.offsetSamples}샘플`}</td>
+                  <td>{row.error ? '-' : `${row.lengthDifference}샘플`}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
         <p className="rounded-panel border border-studio-border bg-studio-card p-4 text-title">현재 위치 {formatBarBeat(position)}</p>
       </div>
     </main>

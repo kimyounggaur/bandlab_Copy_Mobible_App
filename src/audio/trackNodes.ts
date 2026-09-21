@@ -1,6 +1,6 @@
 import * as Tone from 'tone';
 import { audioEngine } from './engine';
-import { getBuffer, getBufferFromBlob, peekBlobBuffer, peekBuffer } from './bufferCache';
+import { getLoopBuffer, getBufferFromBlob, peekBlobBuffer, peekLoopBuffer } from './bufferCache';
 import { applyTrackSettings, buildRenderGraph, type TrackNode } from './renderGraph';
 import { pickStretchMode, type StretchMode } from './stretch';
 import { getLoop } from '../data/loopManifest';
@@ -44,7 +44,15 @@ class TrackScheduler {
     await Promise.all(project.tracks.flatMap((track) => track.clips.map(async (clip) => {
       if (clip.source.kind === 'loop') {
         const loop = getLoop(clip.source.loopId);
-        if (loop) await getBuffer(loop.files.wav);
+        if (loop) {
+          this.clipStatus.set(clip.id, 'loading');
+          try {
+            await getLoopBuffer(loop);
+            this.clipStatus.set(clip.id, 'ready');
+          } catch {
+            this.clipStatus.set(clip.id, 'missing');
+          }
+        }
       } else if (clip.source.kind === 'recording') {
         this.clipStatus.set(clip.id, 'loading');
         try {
@@ -125,7 +133,7 @@ class TrackScheduler {
       }
       const loop = getLoop(clip.source.loopId);
       if (!loop) continue;
-      const audioBuffer = peekBuffer(loop.files.wav);
+      const audioBuffer = peekLoopBuffer(loop);
       if (!audioBuffer) continue;
       const mode = pickStretchMode(loop.category, this.bpm / loop.sourceBpm);
       schedule.sourceBpm = loop.sourceBpm;

@@ -19,6 +19,7 @@ function isLoop(value: unknown): value is LoopManifestItem {
     && typeof item.frames === 'number' && item.frames > 0
     && typeof item.files?.wav === 'string'
     && typeof item.hash === 'string' && /^[0-9a-f]{12}$/.test(item.hash)
+    && typeof item.bytes === 'number' && item.bytes > 0
     && typeof item.starter === 'boolean'
     && typeof item.mood === 'string'
     && item.license === 'CC0-generated';

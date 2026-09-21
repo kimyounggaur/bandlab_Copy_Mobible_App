@@ -76,6 +76,7 @@ export type LoopManifestItem = {
   frames: number;
   files: { wav: string; flac?: string };
   hash: string;
+  bytes: number;
   starter: boolean;
   mood: string;
   license: string;

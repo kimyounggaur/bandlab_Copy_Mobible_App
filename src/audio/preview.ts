@@ -1,5 +1,5 @@
 import * as Tone from 'tone';
-import { getBuffer } from './bufferCache';
+import { getLoopBuffer } from './bufferCache';
 import { audioEngine } from './engine';
 import { pickStretchMode } from './stretch';
 import { trackScheduler } from './trackNodes';
@@ -35,7 +35,7 @@ class LoopPreview {
     this.emit();
     try {
       await audioEngine.ensureReady();
-      const buffer = await getBuffer(loop.files.wav);
+      const buffer = await getLoopBuffer(loop);
       if (generation !== this.generation) return;
       this.bus ??= new Tone.Gain().connect(trackScheduler.getMasterInput());
       const project = useProjectStore.getState().currentProject;

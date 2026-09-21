@@ -1,16 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { audioEngine } from './audio/engine';
 import { trackScheduler } from './audio/trackNodes';
-import { AudioDevPage } from './components/dev/AudioDevPage';
-import { TokensPage } from './components/dev/TokensPage';
-import { EffectsSheet } from './components/effects/EffectsSheet';
-import { ExportSheet } from './components/export/ExportSheet';
 import { HomePage } from './components/home/HomePage';
 import { InstrumentsPanel } from './components/instruments/InstrumentsPanel';
-import { LoopLibrarySheet } from './components/library/LoopLibrarySheet';
 import { MixerPanel } from './components/mixer/MixerPanel';
 import { OnboardingGate } from './components/onboarding/OnboardingGate';
-import { RecordSheet } from './components/recording/RecordSheet';
 import { AppHeader } from './components/shell/AppHeader';
 import { Timeline } from './components/timeline/Timeline';
 import { TransportBar } from './components/transport/TransportBar';
@@ -20,6 +14,12 @@ import { useProjectStore } from './stores/projectStore';
 import { useUiStore } from './stores/uiStore';
 
 type Screen = 'home' | 'studio';
+const AudioDevPage = lazy(() => import('./components/dev/AudioDevPage').then((module) => ({ default: module.AudioDevPage })));
+const TokensPage = lazy(() => import('./components/dev/TokensPage').then((module) => ({ default: module.TokensPage })));
+const EffectsSheet = lazy(() => import('./components/effects/EffectsSheet').then((module) => ({ default: module.EffectsSheet })));
+const ExportSheet = lazy(() => import('./components/export/ExportSheet').then((module) => ({ default: module.ExportSheet })));
+const RecordSheet = lazy(() => import('./components/recording/RecordSheet').then((module) => ({ default: module.RecordSheet })));
+const LoopLibrarySheet = lazy(() => import('./components/library/LoopLibrarySheet').then((module) => ({ default: module.LoopLibrarySheet })));
 
 export default function App() {
   const path = window.location.pathname;
@@ -30,6 +30,9 @@ export default function App() {
   const loadSavedProjects = useProjectStore((state) => state.loadSavedProjects);
   const saveNow = useProjectStore((state) => state.saveNow);
   const mode = useUiStore((state) => state.mode);
+  const loopSheetOpen = useUiStore((state) => state.loopSheetOpen);
+  const effectsTrackId = useUiStore((state) => state.effectsTrackId);
+  const exportOpen = useUiStore((state) => state.exportOpen);
   const setMode = useUiStore((state) => state.setMode);
 
   const route = useMemo(() => {
@@ -41,6 +44,17 @@ export default function App() {
   useEffect(() => {
     void loadSavedProjects();
   }, [loadSavedProjects]);
+
+  useEffect(() => {
+    if (route !== 'app') return;
+    const prefetch = () => { void import('./components/library/LoopLibrarySheet'); };
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(prefetch);
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = setTimeout(prefetch, 500);
+    return () => clearTimeout(id);
+  }, [route]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -73,8 +87,8 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
-  if (route === 'tokens') return <TokensPage />;
-  if (route === 'audio') return <AudioDevPage />;
+  if (route === 'tokens') return <Suspense fallback={null}><TokensPage /></Suspense>;
+  if (route === 'audio') return <Suspense fallback={null}><AudioDevPage /></Suspense>;
 
   if (screen === 'home') {
     return <HomePage onOpenProject={() => setScreen('studio')} />;
@@ -90,10 +104,12 @@ export default function App() {
       </main>
       <SegmentedTabs mode={mode} onModeChange={setMode} />
       <TransportBar onRecord={() => setRecordOpen(true)} onToast={setToast} />
-      <LoopLibrarySheet onToast={setToast} />
-      <RecordSheet open={recordOpen} onClose={() => setRecordOpen(false)} onToast={setToast} />
-      <EffectsSheet />
-      <ExportSheet />
+      <Suspense fallback={null}>
+        {loopSheetOpen ? <LoopLibrarySheet onToast={setToast} /> : null}
+        {recordOpen ? <RecordSheet open={recordOpen} onClose={() => setRecordOpen(false)} onToast={setToast} /> : null}
+        {effectsTrackId ? <EffectsSheet /> : null}
+        {exportOpen ? <ExportSheet /> : null}
+      </Suspense>
       <OnboardingGate
         onDone={() => {
           setScreen('studio');

@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import ffmpegStatic from 'ffmpeg-static';
 
 const sampleRate = 44100;
 const sourceBpm = 90;
@@ -16,6 +18,9 @@ const categories = [
 const outputDir = join(process.cwd(), 'public', 'loops');
 mkdirSync(outputDir, { recursive: true });
 const loops = [];
+const ffmpeg = process.env.FFMPEG_PATH || ffmpegStatic || 'ffmpeg';
+const ffmpegAvailable = spawnSync(ffmpeg, ['-version'], { stdio: 'ignore' }).status === 0;
+if (!ffmpegAvailable) console.warn('ffmpeg was not found. Install ffmpeg or run npm install to generate FLAC; WAV files will still be generated.');
 
 for (const group of categories) {
   for (let variant = 1; variant <= group.count; variant += 1) {
@@ -23,7 +28,15 @@ for (const group of categories) {
     const genre = grooveFor(variant);
     const samples = synthesizeLoop(group.category, variant, group.bars, genre);
     const wav = encodeWav(samples);
-    writeFileSync(join(outputDir, `${id}.wav`), wav);
+    const wavPath = join(outputDir, `${id}.wav`);
+    const flacPath = join(outputDir, `${id}.flac`);
+    writeFileSync(wavPath, wav);
+    let flac = null;
+    if (ffmpegAvailable) {
+      const result = spawnSync(ffmpeg, ['-y', '-loglevel', 'error', '-i', wavPath, '-compression_level', '8', flacPath]);
+      if (result.status !== 0) throw new Error(`FLAC encoding failed for ${id}: ${result.stderr?.toString()}`);
+      flac = readFileSync(flacPath);
+    }
     const mood = group.category === 'fx' ? '반짝이는' : genre === 'hiphop' ? '단단한' : genre === 'pop' ? '경쾌한' : '빠른';
     const label = { drums: '드럼', bass: '베이스', melody: '멜로디', fx: '효과음' }[group.category];
     loops.push({
@@ -37,8 +50,9 @@ for (const group of categories) {
       sampleRate,
       channels: 1,
       frames: samples.length,
-      files: { wav: `/loops/${id}.wav` },
-      hash: createHash('sha1').update(wav).digest('hex').slice(0, 12),
+      files: { ...(flac ? { flac: `/loops/${id}.flac` } : {}), wav: `/loops/${id}.wav` },
+      hash: createHash('sha1').update(flac ?? wav).digest('hex').slice(0, 12),
+      bytes: flac?.length ?? wav.length,
       starter: (group.category === 'drums' || group.category === 'bass') && [1, 3, 4].includes(variant),
       mood,
       license: 'CC0-generated',

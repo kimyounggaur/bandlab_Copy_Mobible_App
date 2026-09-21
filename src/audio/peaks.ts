@@ -1,5 +1,5 @@
 import type * as Tone from 'tone';
-import { getBuffer, getBufferFromBlob } from './bufferCache';
+import { getLoopBuffer, getBufferFromBlob } from './bufferCache';
 import { getLoop } from '../data/loopManifest';
 import { loadAudioBlob } from '../storage/db';
 import type { Clip } from '../types/project';
@@ -31,7 +31,7 @@ async function loadClipPeaks(clip: Clip): Promise<number[] | null> {
   if (clip.source.kind === 'loop') {
     const loop = getLoop(clip.source.loopId);
     if (!loop) return null;
-    buffer = await getBuffer(loop.files.wav);
+    buffer = await getLoopBuffer(loop);
   } else {
     const blob = await loadAudioBlob(clip.source.audioId);
     if (!blob) return null;
