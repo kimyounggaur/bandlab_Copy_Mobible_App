@@ -1,8 +1,9 @@
-import { Mic, Plus, RotateCcw, Square, Volume2, VolumeX } from 'lucide-react';
+import { CircleHelp, Mic, Plus, RotateCcw, Square, Volume2, VolumeX } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { audioEngine } from '../../audio/engine';
 import { trackScheduler } from '../../audio/trackNodes';
 import { useProjectStore } from '../../stores/projectStore';
+import { loadMeta, saveMeta } from '../../storage/db';
 import { useUiStore } from '../../stores/uiStore';
 import { formatBarBeat } from '../../utils/music';
 import { IconButton } from '../common/IconButton';
@@ -57,11 +58,25 @@ export function TransportBar({ onRecord, onToast }: TransportBarProps) {
       await trackScheduler.syncProject(project);
       audioEngine.play();
       localStorage.setItem('loop-pocket-first-sound', String(Date.now()));
+      if (/iPhone|iPad|iPod/.test(navigator.userAgent)
+        && !await loadMeta<boolean>('ios-silent-hint-shown')) {
+        await saveMeta('ios-silent-hint-shown', true);
+        onToast('소리가 안 들리면 폰 옆의 무음 스위치를 확인해주세요');
+      }
     }
   }
 
   return (
     <footer className="safe-bottom border-t border-studio-border bg-studio-bg/95 px-3 pb-2">
+      {engineState.needsResume && (
+        <button
+          type="button"
+          onClick={() => void audioEngine.ensureReady()}
+          className="w-full rounded-studio border border-studio-warning px-3 py-2 text-body font-semibold text-studio-warning"
+        >
+          소리를 다시 켜려면 눌러주세요
+        </button>
+      )}
       <div className="flex items-center justify-between gap-2 py-2">
         <IconButton
           label={engineState.metronome ? '메트로놈 끄기' : '메트로놈 켜기'}
@@ -120,6 +135,14 @@ export function TransportBar({ onRecord, onToast }: TransportBarProps) {
           <option value={16}>16마디</option>
         </select>
       </div>
+      <button
+        type="button"
+        onClick={() => onToast('소리가 안 들리면 무음 스위치와 기기 볼륨을 확인해주세요')}
+        className="flex min-h-9 items-center gap-1 text-micro text-studio-muted"
+      >
+        <CircleHelp size={14} aria-hidden="true" />
+        소리가 안 들려요
+      </button>
     </footer>
   );
 }

@@ -34,11 +34,12 @@ class AudioEngine {
   private countInTimers: number[] = [];
   private countInStartTime: number | null = null;
   private listeners = new Set<(state: EngineState) => void>();
+  private observingContext = false;
 
   constructor() {
     if (typeof document !== 'undefined') {
       document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && Tone.getContext().state === 'suspended') {
+        if (!document.hidden && Tone.getContext().state !== 'running') {
           this.state.needsResume = true;
           this.emit();
         }
@@ -48,7 +49,17 @@ class AudioEngine {
 
   async init() {
     await Tone.start();
-    if (Tone.getContext().state === 'suspended') {
+    if (!this.observingContext) {
+      this.observingContext = true;
+      Tone.getContext().rawContext.addEventListener('statechange', () => {
+        const suspended = Tone.getContext().state !== 'running';
+        if (this.state.initialized && this.state.needsResume !== suspended) {
+          this.state.needsResume = suspended;
+          this.emit();
+        }
+      });
+    }
+    if (Tone.getContext().state !== 'running') {
       await Tone.getContext().resume();
     }
     this.clickSynth ??= new Tone.Synth({

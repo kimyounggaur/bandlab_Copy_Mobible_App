@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { audioEngine } from './audio/engine';
 import { trackScheduler } from './audio/trackNodes';
 import { collectOrphanAudio } from './storage/db';
@@ -13,8 +13,20 @@ import { SegmentedTabs } from './components/common/SegmentedTabs';
 import { Toast } from './components/common/Toast';
 import { useProjectStore } from './stores/projectStore';
 import { useUiStore } from './stores/uiStore';
+import { useWakeLock } from './hooks/useWakeLock';
 
-type Screen = 'home' | 'studio';
+type Route = 'home' | 'studio' | 'tokens' | 'audio';
+function routeFromHash(): Route {
+  if (window.location.hash === '#/') return 'home';
+  if (import.meta.env.DEV && window.location.hash === '#/dev/tokens') return 'tokens';
+  if (import.meta.env.DEV && window.location.hash === '#/dev/audio') return 'audio';
+  return 'studio';
+}
+
+function navigate(route: 'home' | 'studio') {
+  window.location.hash = route === 'home' ? '#/' : '#/studio';
+}
+
 const AudioDevPage = lazy(() => import('./components/dev/AudioDevPage').then((module) => ({ default: module.AudioDevPage })));
 const TokensPage = lazy(() => import('./components/dev/TokensPage').then((module) => ({ default: module.TokensPage })));
 const EffectsSheet = lazy(() => import('./components/effects/EffectsSheet').then((module) => ({ default: module.EffectsSheet })));
@@ -23,8 +35,7 @@ const RecordSheet = lazy(() => import('./components/recording/RecordSheet').then
 const LoopLibrarySheet = lazy(() => import('./components/library/LoopLibrarySheet').then((module) => ({ default: module.LoopLibrarySheet })));
 
 export default function App() {
-  const path = window.location.pathname;
-  const [screen, setScreen] = useState<Screen>('studio');
+  const [route, setRoute] = useState<Route>(routeFromHash);
   const [recordOpen, setRecordOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const saveDebounceRef = useRef<number | null>(null);
@@ -39,11 +50,14 @@ export default function App() {
   const exportOpen = useUiStore((state) => state.exportOpen);
   const setMode = useUiStore((state) => state.setMode);
 
-  const route = useMemo(() => {
-    if (path === '/dev/tokens') return 'tokens';
-    if (path === '/dev/audio') return 'audio';
-    return 'app';
-  }, [path]);
+  useWakeLock();
+
+  useEffect(() => {
+    if (!window.location.hash) window.history.replaceState(window.history.state, '', '#/studio');
+    const syncRoute = () => setRoute(routeFromHash());
+    window.addEventListener('hashchange', syncRoute);
+    return () => window.removeEventListener('hashchange', syncRoute);
+  }, []);
 
   useEffect(() => {
     void loadSavedProjects();
@@ -63,7 +77,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (route !== 'app') return;
+    if (route !== 'studio' && route !== 'home') return;
     const prefetch = () => { void import('./components/library/LoopLibrarySheet'); };
     if (typeof window.requestIdleCallback === 'function') {
       const id = window.requestIdleCallback(prefetch);
@@ -127,13 +141,13 @@ export default function App() {
   if (route === 'tokens') return <Suspense fallback={null}><TokensPage /></Suspense>;
   if (route === 'audio') return <Suspense fallback={null}><AudioDevPage /></Suspense>;
 
-  if (screen === 'home') {
-    return <HomePage onOpenProject={() => setScreen('studio')} />;
+  if (route === 'home') {
+    return <HomePage onOpenProject={() => navigate('studio')} />;
   }
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-studio-bg text-studio-text">
-      <AppHeader onHome={() => setScreen('home')} />
+      <AppHeader onHome={() => navigate('home')} />
       <main className="min-h-0 flex-1">
         {mode === 'studio' ? <Timeline /> : null}
         {mode === 'instruments' ? <InstrumentsPanel /> : null}
@@ -149,7 +163,7 @@ export default function App() {
       </Suspense>
       <OnboardingGate
         onDone={() => {
-          setScreen('studio');
+          navigate('studio');
           setToast('재생 버튼을 눌러 들어보세요');
         }}
       />

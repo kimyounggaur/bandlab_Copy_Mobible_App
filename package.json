@@ -13,7 +13,8 @@
     "typecheck": "tsc -b",
     "format": "prettier --write .",
     "generate:loops": "node scripts/generate-loops.mjs",
-    "generate:kit": "node scripts/generate-kit.mjs"
+    "generate:kit": "node scripts/generate-kit.mjs",
+    "generate:icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "idb": "^8.0.3",
@@ -25,6 +26,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^24.13.2",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",

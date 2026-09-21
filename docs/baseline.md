@@ -62,3 +62,11 @@ Measured at commit `324d578` before the R0 source changes.
 | Storage persistence prompt and usage/80% warning | Implemented; browser grant varies by device |
 | Autosave max wait, visibility/pagehide flush | Implemented; physical mobile lifecycle not measured |
 | Test suite after D1 | 60 tests passed |
+
+## D2 platform (2026-09-21)
+
+| Metric | Result |
+|---|---:|
+| Sheet Back, UI-close history consumption, home/studio Back | Passed in desktop Chromium |
+| 192/512/maskable and iOS PNG generation | Passed; PNG visually inspected |
+| Android hardware Back, Wake Lock, iOS silent switch/Audio Session, interruption | Not measured on physical devices; see `docs/platform-verification.md` |
