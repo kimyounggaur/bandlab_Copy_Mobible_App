@@ -29,10 +29,12 @@ export function AppHeader({ onHome }: AppHeaderProps) {
         />
         <div className="mt-1 flex items-center gap-2 text-micro text-studio-muted">
           <span className="rounded-full border border-studio-border px-2 py-0.5">BPM {project.bpm}</span>
-          <span className="inline-flex items-center gap-1">
-            <Save size={12} />
-            {saveStatus === 'saving' ? '저장 중...' : saveStatus === 'error' ? '저장 확인 필요' : '저장됨'}
-          </span>
+          {saveStatus !== 'idle' && (
+            <span className="inline-flex items-center gap-1">
+              <Save size={12} />
+              {saveStatus === 'saving' ? '저장 중...' : saveStatus === 'error' ? '저장 확인 필요' : '저장됨'}
+            </span>
+          )}
         </div>
       </div>
       <IconButton label="실행 취소" icon={Undo2} onClick={undo} disabled={!past.length} />

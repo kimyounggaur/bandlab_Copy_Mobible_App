@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { loopManifest, starterLoopsForGenre } from '../data/loopManifest';
-import { deleteProject as deleteProjectFromDb, loadProjects, saveProject } from '../storage/db';
+import { collectOrphanAudio, deleteProject as deleteProjectFromDb, loadProjects, saveProject } from '../storage/db';
+import { requestPersistenceAfterMeaningfulAction } from '../storage/persistence';
 import type { Clip, EffectSettings, LoopGenre, Project, Track, TrackType } from '../types/project';
 import { createId } from '../utils/ids';
 import { trackColors } from '../utils/music';
@@ -82,6 +83,7 @@ type ProjectStore = {
   past: Project[];
   future: Project[];
   saveStatus: 'idle' | 'saving' | 'saved' | 'error';
+  hydrated: boolean;
   loadSavedProjects: () => Promise<void>;
   setCurrentProject: (projectId: string) => void;
   createProject: (genre?: LoopGenre) => Project;
@@ -107,6 +109,7 @@ type ProjectStore = {
 
 const initialProject = createStarterProject('hiphop');
 let lastHistory: { key: string; projectId: string; at: number } | null = null;
+let pendingSave: Promise<void> = Promise.resolve();
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
   projects: [initialProject],
@@ -116,26 +119,35 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   past: [],
   future: [],
   saveStatus: 'idle',
+  hydrated: false,
 
   async loadSavedProjects() {
-    const saved = await loadProjects();
-    if (!saved.length) return;
-    set({
-      projects: saved,
-      currentProject: saved[0],
-      selectedTrackId: saved[0].tracks[0]?.id ?? null,
-      selectedClipId: null,
-    });
+    try {
+      const saved = await loadProjects();
+      if (saved.length) {
+        set({
+          projects: saved,
+          currentProject: saved[0],
+          selectedTrackId: saved[0].tracks[0]?.id ?? null,
+          selectedClipId: null,
+        });
+      }
+    } catch {
+      set({ saveStatus: 'error' });
+    } finally {
+      set({ hydrated: true });
+    }
   },
 
   setCurrentProject(projectId) {
     const project = get().projects.find((item) => item.id === projectId);
     if (!project) return;
     lastHistory = null;
-    set({ currentProject: project, selectedTrackId: project.tracks[0]?.id ?? null, selectedClipId: null, past: [], future: [] });
+    set({ currentProject: project, selectedTrackId: project.tracks[0]?.id ?? null, selectedClipId: null, past: [], future: [], saveStatus: 'idle' });
   },
 
   createProject(genre = 'hiphop') {
+    const hadProject = get().projects.length > 0;
     const project = createStarterProject(genre);
     lastHistory = null;
     set((state) => ({
@@ -145,8 +157,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       selectedClipId: null,
       past: [],
       future: [],
+      saveStatus: 'idle',
     }));
-    void saveProject(project);
+    void get().saveNow();
+    if (hadProject) void requestPersistenceAfterMeaningfulAction().catch(() => undefined);
     return project;
   },
 
@@ -155,12 +169,15 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   async deleteProject(projectId) {
+    await pendingSave.catch(() => undefined);
     await deleteProjectFromDb(projectId);
     set((state) => {
       const projects = state.projects.filter((project) => project.id !== projectId);
       const currentProject = projects[0] ?? createStarterProject('hiphop');
-      return { projects: projects.length ? projects : [currentProject], currentProject };
+      return { projects: projects.length ? projects : [currentProject], currentProject, past: [], future: [] };
     });
+    const state = get();
+    await collectOrphanAudio([state.currentProject, ...state.past, ...state.future]).catch(() => undefined);
   },
 
   addTrack(type, name) {
@@ -306,8 +323,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     const project = get().currentProject;
     set({ saveStatus: 'saving' });
     try {
-      await saveProject(project);
-      set((state) => ({ projects: mergeProject(state.projects, project), saveStatus: 'saved' }));
+      pendingSave = pendingSave.catch(() => undefined).then(() => saveProject(project));
+      await pendingSave;
+      set((state) => ({
+        projects: mergeProject(state.projects, state.currentProject.id === project.id ? state.currentProject : project),
+        saveStatus: state.currentProject === project ? 'saved' : 'idle',
+      }));
     } catch {
       set({ saveStatus: 'error' });
     }
@@ -338,5 +359,6 @@ function mutateProject(
     projects: mergeProject(state.projects, next),
     past: withHistory && !coalesced ? [...state.past.slice(-49), previous] : state.past,
     future: withHistory ? [] : state.future,
+    saveStatus: 'idle',
   });
 }

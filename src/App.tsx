@@ -1,6 +1,7 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { audioEngine } from './audio/engine';
 import { trackScheduler } from './audio/trackNodes';
+import { collectOrphanAudio } from './storage/db';
 import { HomePage } from './components/home/HomePage';
 import { InstrumentsPanel } from './components/instruments/InstrumentsPanel';
 import { MixerPanel } from './components/mixer/MixerPanel';
@@ -26,9 +27,12 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('studio');
   const [recordOpen, setRecordOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const saveDebounceRef = useRef<number | null>(null);
+  const saveMaxRef = useRef<number | null>(null);
   const project = useProjectStore((state) => state.currentProject);
   const loadSavedProjects = useProjectStore((state) => state.loadSavedProjects);
   const saveNow = useProjectStore((state) => state.saveNow);
+  const hydrated = useProjectStore((state) => state.hydrated);
   const mode = useUiStore((state) => state.mode);
   const loopSheetOpen = useUiStore((state) => state.loopSheetOpen);
   const effectsTrackId = useUiStore((state) => state.effectsTrackId);
@@ -46,6 +50,19 @@ export default function App() {
   }, [loadSavedProjects]);
 
   useEffect(() => {
+    const scheduleGc = () => {
+      const state = useProjectStore.getState();
+      void collectOrphanAudio([state.currentProject, ...state.past, ...state.future]).catch(() => undefined);
+    };
+    if (typeof window.requestIdleCallback === 'function') {
+      const timer = window.setTimeout(() => window.requestIdleCallback(scheduleGc), 3000);
+      return () => window.clearTimeout(timer);
+    }
+    const timer = window.setTimeout(scheduleGc, 3000);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     if (route !== 'app') return;
     const prefetch = () => { void import('./components/library/LoopLibrarySheet'); };
     if (typeof window.requestIdleCallback === 'function') {
@@ -56,12 +73,32 @@ export default function App() {
     return () => clearTimeout(id);
   }, [route]);
 
+  const flushSave = useCallback(() => {
+    if (saveDebounceRef.current !== null) window.clearTimeout(saveDebounceRef.current);
+    if (saveMaxRef.current !== null) window.clearTimeout(saveMaxRef.current);
+    saveDebounceRef.current = null;
+    saveMaxRef.current = null;
+    void saveNow();
+  }, [saveNow]);
+
   useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      void saveNow();
-    }, 2000);
-    return () => window.clearTimeout(timeout);
-  }, [project, saveNow]);
+    if (!hydrated) return;
+    if (saveDebounceRef.current !== null) window.clearTimeout(saveDebounceRef.current);
+    saveDebounceRef.current = window.setTimeout(flushSave, 2000);
+    saveMaxRef.current ??= window.setTimeout(flushSave, 10_000);
+  }, [project, hydrated, flushSave]);
+
+  useEffect(() => {
+    const onVisibility = () => { if (document.hidden) flushSave(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('pagehide', flushSave);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('pagehide', flushSave);
+      if (saveDebounceRef.current !== null) window.clearTimeout(saveDebounceRef.current);
+      if (saveMaxRef.current !== null) window.clearTimeout(saveMaxRef.current);
+    };
+  }, [flushSave]);
 
   useEffect(() => {
     const sync = () => {

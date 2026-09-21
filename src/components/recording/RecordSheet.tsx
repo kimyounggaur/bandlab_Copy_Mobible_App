@@ -6,6 +6,7 @@ import { getRecordingLatency } from '../../audio/latency';
 import { MicRecorder, type RecorderState } from '../../audio/recorder';
 import { recordingPlacement } from '../../audio/recordingTiming';
 import { useProjectStore } from '../../stores/projectStore';
+import { requestPersistenceAfterMeaningfulAction } from '../../storage/persistence';
 import { createId } from '../../utils/ids';
 import { BottomSheet } from '../common/BottomSheet';
 
@@ -102,6 +103,10 @@ export function RecordSheet({ open, onClose, onToast }: RecordSheetProps) {
         }
       }
       setState('ready');
+      const persistence = await requestPersistenceAfterMeaningfulAction().catch(() => null);
+      if (persistence?.showInstallHint) {
+        window.setTimeout(() => onToast('만든 음악이 사라지지 않게 하려면 홈 화면에 추가해두세요'), 2400);
+      }
     } catch {
       audioEngine.setRecording(false);
       setState('error');

@@ -1,5 +1,10 @@
+import { Settings2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getStorageUsage } from '../../storage/persistence';
 import type { LoopGenre } from '../../types/project';
 import { useProjectStore } from '../../stores/projectStore';
+import { IconButton } from '../common/IconButton';
+import { StorageSheet } from '../settings/StorageSheet';
 
 type HomePageProps = {
   onOpenProject: () => void;
@@ -16,6 +21,13 @@ export function HomePage({ onOpenProject }: HomePageProps) {
   const createProject = useProjectStore((state) => state.createProject);
   const setCurrentProject = useProjectStore((state) => state.setCurrentProject);
   const deleteProject = useProjectStore((state) => state.deleteProject);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [storageWarning, setStorageWarning] = useState(false);
+
+  useEffect(() => {
+    void getStorageUsage().then((usage) => setStorageWarning(Boolean(usage && usage.quota > 0 && usage.usage / usage.quota >= 0.8)))
+      .catch(() => undefined);
+  }, []);
 
   function quickStart(genre: LoopGenre) {
     createProject(genre);
@@ -25,7 +37,15 @@ export function HomePage({ onOpenProject }: HomePageProps) {
   return (
     <main className="safe-top safe-bottom studio-scrollbar h-dvh overflow-y-auto bg-studio-bg px-4 py-6">
       <section className="mx-auto max-w-xl">
-        <p className="text-body font-semibold text-studio-accent">LoopPocket</p>
+        <div className="flex items-center justify-between">
+          <p className="text-body font-semibold text-studio-accent">LoopPocket</p>
+          <IconButton label="저장 공간" icon={Settings2} onClick={() => setSettingsOpen(true)} />
+        </div>
+        {storageWarning && (
+          <button type="button" onClick={() => setSettingsOpen(true)} className="mt-3 w-full rounded-studio bg-studio-warning p-3 text-left text-body text-studio-bg">
+            저장 공간이 거의 찼어요. 녹음을 정리해 주세요.
+          </button>
+        )}
         <h1 className="mt-2 text-display font-bold text-studio-text">열자마자 소리가 나는 모바일 작업실</h1>
         <p className="mt-2 text-body text-studio-muted">오프라인에서도 저장되고, 로그인 없이 바로 시작합니다.</p>
         <button
@@ -36,6 +56,7 @@ export function HomePage({ onOpenProject }: HomePageProps) {
           새 프로젝트 만들기
         </button>
       </section>
+      <StorageSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       <section className="mx-auto mt-6 max-w-xl">
         <h2 className="text-title font-semibold text-studio-text">빠른 시작</h2>

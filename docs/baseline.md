@@ -52,3 +52,13 @@ Measured at commit `324d578` before the R0 source changes.
 | Raw note position survives quantize off | Confirmed in IndexedDB |
 | Note-inclusive WAV export | Completed in desktop Chromium |
 | Wired/speaker tap-to-sound latency and rapid tapping | Not measured on physical devices |
+
+## D1 storage durability (2026-09-21)
+
+| Metric | Result |
+|---|---:|
+| v1/v2 to v3 migration, damaged quarantine, future version preservation | Automated tests passed |
+| Orphan recording deletion, undo reference and future-project guard | Automated tests passed |
+| Storage persistence prompt and usage/80% warning | Implemented; browser grant varies by device |
+| Autosave max wait, visibility/pagehide flush | Implemented; physical mobile lifecycle not measured |
+| Test suite after D1 | 60 tests passed |
