@@ -1,5 +1,5 @@
 import { Mic, Plus, RotateCcw, Square, Volume2, VolumeX } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { audioEngine } from '../../audio/engine';
 import { trackScheduler } from '../../audio/trackNodes';
 import { useProjectStore } from '../../stores/projectStore';
@@ -8,19 +8,43 @@ import { formatBarBeat } from '../../utils/music';
 import { IconButton } from '../common/IconButton';
 
 type TransportBarProps = {
-  positionBars: number;
   onRecord: () => void;
   onToast: (message: string) => void;
 };
 
-export function TransportBar({ positionBars, onRecord, onToast }: TransportBarProps) {
+export function TransportBar({ onRecord, onToast }: TransportBarProps) {
   const project = useProjectStore((state) => state.currentProject);
   const setBpm = useProjectStore((state) => state.setBpm);
+  const beginHistory = useProjectStore((state) => state.beginHistory);
   const setLoopLength = useProjectStore((state) => state.setLoopLength);
   const setLoopSheetOpen = useUiStore((state) => state.setLoopSheetOpen);
   const [engineState, setEngineState] = useState(audioEngine.getState());
+  const positionRef = useRef<HTMLElement>(null);
+  const bpmDragRef = useRef({ active: false, began: false });
 
   useEffect(() => audioEngine.subscribe(setEngineState), []);
+  useEffect(() => {
+    let frame = 0;
+    const renderPosition = () => {
+      if (positionRef.current) positionRef.current.textContent = formatBarBeat(audioEngine.getPositionInBars());
+    };
+    const tick = () => {
+      renderPosition();
+      frame = requestAnimationFrame(tick);
+    };
+    const refresh = () => {
+      cancelAnimationFrame(frame);
+      renderPosition();
+      if (audioEngine.getState().playing && !document.hidden) frame = requestAnimationFrame(tick);
+    };
+    const unsubscribe = audioEngine.subscribe(refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      cancelAnimationFrame(frame);
+      unsubscribe();
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, []);
 
   async function togglePlay() {
     if (!engineState.initialized || engineState.needsResume) {
@@ -69,12 +93,21 @@ export function TransportBar({ positionBars, onRecord, onToast }: TransportBarPr
             min={60}
             max={200}
             value={project.bpm}
-            onChange={(event) => setBpm(Number(event.target.value))}
+            onPointerDown={() => { bpmDragRef.current = { active: true, began: false }; }}
+            onPointerUp={() => { bpmDragRef.current = { active: false, began: false }; }}
+            onPointerCancel={() => { bpmDragRef.current = { active: false, began: false }; }}
+            onChange={(event) => {
+              if (bpmDragRef.current.active && !bpmDragRef.current.began) {
+                beginHistory();
+                bpmDragRef.current.began = true;
+              }
+              setBpm(Number(event.target.value), !bpmDragRef.current.active);
+            }}
             className="min-w-0 flex-1"
           />
         </label>
-        <strong className="rounded-full border border-studio-border px-3 py-1 text-studio-text">
-          {formatBarBeat(positionBars)}
+        <strong ref={positionRef} className="rounded-full border border-studio-border px-3 py-1 text-studio-text">
+          {formatBarBeat(audioEngine.getPositionInBars())}
         </strong>
         <select
           aria-label="루프 길이"

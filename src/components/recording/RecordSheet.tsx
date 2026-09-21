@@ -8,12 +8,11 @@ import { BottomSheet } from '../common/BottomSheet';
 
 type RecordSheetProps = {
   open: boolean;
-  playheadBar: number;
   onClose: () => void;
   onToast: (message: string) => void;
 };
 
-export function RecordSheet({ open, playheadBar, onClose, onToast }: RecordSheetProps) {
+export function RecordSheet({ open, onClose, onToast }: RecordSheetProps) {
   const recorderRef = useRef<MicRecorder | null>(null);
   const pipelineLatencyRef = useRef(0);
   const [state, setState] = useState<RecorderState>('idle');
@@ -51,7 +50,7 @@ export function RecordSheet({ open, playheadBar, onClose, onToast }: RecordSheet
       if (trackId) {
         addClip(trackId, {
           id: createId('clip'),
-          startBar: Math.max(0, playheadBar + offsetMs / 1000 / audioEngine.barDurationSeconds()),
+          startBar: Math.max(0, audioEngine.getPositionInBars() + offsetMs / 1000 / audioEngine.barDurationSeconds()),
           lengthBars: 1,
           gain: 1,
           name: '새 녹음',

@@ -24,7 +24,6 @@ type Screen = 'home' | 'studio';
 export default function App() {
   const path = window.location.pathname;
   const [screen, setScreen] = useState<Screen>('studio');
-  const [positionBars, setPositionBars] = useState(0);
   const [recordOpen, setRecordOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const project = useProjectStore((state) => state.currentProject);
@@ -49,16 +48,6 @@ export default function App() {
     }, 2000);
     return () => window.clearTimeout(timeout);
   }, [project, saveNow]);
-
-  useEffect(() => {
-    let frame = 0;
-    const tick = () => {
-      setPositionBars(audioEngine.getPositionInBars());
-      frame = requestAnimationFrame(tick);
-    };
-    tick();
-    return () => cancelAnimationFrame(frame);
-  }, []);
 
   useEffect(() => {
     const sync = () => {
@@ -95,14 +84,14 @@ export default function App() {
     <div className="flex h-dvh flex-col overflow-hidden bg-studio-bg text-studio-text">
       <AppHeader onHome={() => setScreen('home')} />
       <main className="min-h-0 flex-1">
-        {mode === 'studio' ? <Timeline positionBars={positionBars} /> : null}
+        {mode === 'studio' ? <Timeline /> : null}
         {mode === 'instruments' ? <InstrumentsPanel /> : null}
         {mode === 'mixer' ? <MixerPanel /> : null}
       </main>
       <SegmentedTabs mode={mode} onModeChange={setMode} />
-      <TransportBar positionBars={positionBars} onRecord={() => setRecordOpen(true)} onToast={setToast} />
-      <LoopLibrarySheet playheadBar={positionBars} onToast={setToast} />
-      <RecordSheet open={recordOpen} playheadBar={positionBars} onClose={() => setRecordOpen(false)} onToast={setToast} />
+      <TransportBar onRecord={() => setRecordOpen(true)} onToast={setToast} />
+      <LoopLibrarySheet onToast={setToast} />
+      <RecordSheet open={recordOpen} onClose={() => setRecordOpen(false)} onToast={setToast} />
       <EffectsSheet />
       <ExportSheet />
       <OnboardingGate

@@ -27,11 +27,10 @@ const genreLabels: Record<LoopGenre | 'all', string> = {
 };
 
 type LoopLibrarySheetProps = {
-  playheadBar: number;
   onToast: (message: string) => void;
 };
 
-export function LoopLibrarySheet({ playheadBar, onToast }: LoopLibrarySheetProps) {
+export function LoopLibrarySheet({ onToast }: LoopLibrarySheetProps) {
   const open = useUiStore((state) => state.loopSheetOpen);
   const setOpen = useUiStore((state) => state.setLoopSheetOpen);
   const addLoop = useProjectStore((state) => state.addLoopToSelectedTrack);
@@ -84,7 +83,7 @@ export function LoopLibrarySheet({ playheadBar, onToast }: LoopLibrarySheetProps
   }
 
   function add(loopId: string) {
-    addLoop(loopId, playheadBar);
+    addLoop(loopId, audioEngine.getPositionInBars());
     localStorage.setItem('loop-pocket-first-loop', String(Date.now()));
     onToast(selectedTrackId ? '루프를 얹었어요' : '새 트랙을 만들고 루프를 얹었어요');
     setOpen(false);

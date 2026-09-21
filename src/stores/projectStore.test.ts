@@ -51,4 +51,21 @@ describe('project store', () => {
     useProjectStore.getState().removeClip(track.id, clip.id);
     expect(useProjectStore.getState().selectedClipId).toBeNull();
   });
+  it('coalesces rapid BPM edits into one undo step', () => {
+    useProjectStore.getState().setBpm(100);
+    useProjectStore.getState().setBpm(110);
+    expect(useProjectStore.getState().past).toHaveLength(1);
+    useProjectStore.getState().undo();
+    expect(useProjectStore.getState().currentProject.bpm).toBe(90);
+  });
+  it('coalesces project name typing', () => {
+    for (const name of ['A', 'AB', 'ABC', 'ABCD']) useProjectStore.getState().renameProject(name);
+    expect(useProjectStore.getState().past).toHaveLength(1);
+    useProjectStore.getState().undo();
+    expect(useProjectStore.getState().currentProject.name).toBe('힙합 스케치');
+  });
+  it('caps meaningful history at 50 entries', () => {
+    for (let index = 0; index < 55; index += 1) useProjectStore.getState().setLoopLength(index % 2 ? 4 : 8);
+    expect(useProjectStore.getState().past).toHaveLength(50);
+  });
 });

@@ -8,20 +8,40 @@ import { clamp, snapBar } from '../../utils/music';
 import { EmptyState } from '../common/EmptyState';
 import { IconButton } from '../common/IconButton';
 
-type TimelineProps = {
-  positionBars: number;
-};
-
 const trackHeaderWidth = 96;
 const laneHeight = 72;
 
-export function Timeline({ positionBars }: TimelineProps) {
+export function Timeline() {
   const project = useProjectStore((state) => state.currentProject);
   const selectedTrackId = useProjectStore((state) => state.selectedTrackId);
   const selectTrack = useProjectStore((state) => state.selectTrack);
   const updateTrack = useProjectStore((state) => state.updateTrack);
   const addTrack = useProjectStore((state) => state.addTrack);
   const [barWidth, setBarWidth] = useState(72);
+  const playheadRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let frame = 0;
+    const renderPosition = () => {
+      if (playheadRef.current) playheadRef.current.style.transform = `translateX(${audioEngine.getPositionInBars() * barWidth}px)`;
+    };
+    const tick = () => {
+      renderPosition();
+      frame = requestAnimationFrame(tick);
+    };
+    const refresh = () => {
+      cancelAnimationFrame(frame);
+      renderPosition();
+      if (audioEngine.getState().playing && !document.hidden) frame = requestAnimationFrame(tick);
+    };
+    const unsubscribe = audioEngine.subscribe(refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      cancelAnimationFrame(frame);
+      unsubscribe();
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [barWidth]);
 
   const totalWidth = project.loopLengthBars * barWidth;
   const ruler = useMemo(() => Array.from({ length: project.loopLengthBars }, (_, index) => index), [project.loopLengthBars]);
@@ -86,8 +106,9 @@ export function Timeline({ positionBars }: TimelineProps) {
 
           <div className="relative">
             <div
+              ref={playheadRef}
               className="pointer-events-none absolute bottom-0 top-0 z-10 w-0.5 bg-studio-accent shadow-led"
-              style={{ left: trackHeaderWidth + positionBars * barWidth }}
+              style={{ left: trackHeaderWidth }}
             />
             {project.tracks.map((track) => (
               <TrackLane
@@ -184,7 +205,6 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
   const selectedClipId = useProjectStore((state) => state.selectedClipId);
   const selectClip = useProjectStore((state) => state.selectClip);
   const selectTrack = useProjectStore((state) => state.selectTrack);
-  const beginHistory = useProjectStore((state) => state.beginHistory);
   const updateClip = useProjectStore((state) => state.updateClip);
   const duplicateClip = useProjectStore((state) => state.duplicateClip);
   const removeClip = useProjectStore((state) => state.removeClip);
@@ -193,6 +213,8 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
     startX: number;
     startBar: number;
     lengthBars: number;
+    nextStartBar: number;
+    nextLengthBars: number;
     mode: 'move' | 'resize-left' | 'resize-right';
   } | null>(null);
 
@@ -213,8 +235,10 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
     const rect = event.currentTarget.getBoundingClientRect();
     const edge = event.clientX - rect.left;
     const mode = edge < 16 ? 'resize-left' : rect.width - edge < 16 ? 'resize-right' : 'move';
-    dragRef.current = { startX: event.clientX, startBar: clip.startBar, lengthBars: clip.lengthBars, mode };
-    beginHistory();
+    dragRef.current = {
+      startX: event.clientX, startBar: clip.startBar, lengthBars: clip.lengthBars,
+      nextStartBar: clip.startBar, nextLengthBars: clip.lengthBars, mode,
+    };
     selectTrack(track.id);
     selectClip(clip.id);
   }
@@ -224,18 +248,32 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
     const deltaBars = snapBar((event.clientX - dragRef.current.startX) / barWidth);
     const { mode, startBar, lengthBars } = dragRef.current;
     if (mode === 'move') {
-      updateClip(track.id, clip.id, { startBar: Math.max(0, snapBar(startBar + deltaBars)) }, false);
+      dragRef.current.nextStartBar = Math.max(0, snapBar(startBar + deltaBars));
     } else if (mode === 'resize-right') {
-      updateClip(track.id, clip.id, { lengthBars: clamp(snapBar(lengthBars + deltaBars), 0.25, 16) }, false);
+      dragRef.current.nextLengthBars = clamp(snapBar(lengthBars + deltaBars), 0.25, 16);
     } else {
       const nextStart = Math.max(0, snapBar(startBar + deltaBars));
       const nextLength = clamp(snapBar(lengthBars - (nextStart - startBar)), 0.25, 16);
-      updateClip(track.id, clip.id, { startBar: nextStart, lengthBars: nextLength }, false);
+      dragRef.current.nextStartBar = nextStart;
+      dragRef.current.nextLengthBars = nextLength;
     }
+    event.currentTarget.style.left = `${dragRef.current.nextStartBar * barWidth}px`;
+    event.currentTarget.style.width = `${Math.max(28, dragRef.current.nextLengthBars * barWidth - 6)}px`;
   }
 
   function onPointerUp(event: React.PointerEvent<HTMLDivElement>) {
     event.currentTarget.releasePointerCapture(event.pointerId);
+    const drag = dragRef.current;
+    dragRef.current = null;
+    if (drag && (drag.nextStartBar !== drag.startBar || drag.nextLengthBars !== drag.lengthBars)) {
+      updateClip(track.id, clip.id, { startBar: drag.nextStartBar, lengthBars: drag.nextLengthBars });
+    }
+  }
+
+  function onPointerCancel(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    event.currentTarget.style.left = `${clip.startBar * barWidth}px`;
+    event.currentTarget.style.width = `${Math.max(28, clip.lengthBars * barWidth - 6)}px`;
     dragRef.current = null;
   }
 
@@ -248,6 +286,7 @@ function ClipBlock({ clip, track, barWidth }: ClipBlockProps) {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
         onDoubleClick={() => setMenuOpen(true)}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {

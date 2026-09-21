@@ -96,7 +96,7 @@ type ProjectStore = {
   removeClip: (trackId: string, clipId: string) => void;
   selectTrack: (trackId: string | null) => void;
   selectClip: (clipId: string | null) => void;
-  setBpm: (bpm: number) => void;
+  setBpm: (bpm: number, withHistory?: boolean) => void;
   setMasterVolume: (volume: number, withHistory?: boolean) => void;
   setLoopLength: (bars: 4 | 8 | 16) => void;
   beginHistory: () => void;
@@ -106,6 +106,7 @@ type ProjectStore = {
 };
 
 const initialProject = createStarterProject('hiphop');
+let lastHistory: { key: string; projectId: string; at: number } | null = null;
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
   projects: [initialProject],
@@ -130,11 +131,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   setCurrentProject(projectId) {
     const project = get().projects.find((item) => item.id === projectId);
     if (!project) return;
+    lastHistory = null;
     set({ currentProject: project, selectedTrackId: project.tracks[0]?.id ?? null, selectedClipId: null, past: [], future: [] });
   },
 
   createProject(genre = 'hiphop') {
     const project = createStarterProject(genre);
+    lastHistory = null;
     set((state) => ({
       projects: [project, ...state.projects],
       currentProject: project,
@@ -148,7 +151,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   renameProject(name) {
-    mutateProject(set, get, (project) => ({ ...project, name }));
+    mutateProject(set, get, (project) => ({ ...project, name }), true, 'project-name');
   },
 
   async deleteProject(projectId) {
@@ -178,6 +181,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         tracks: project.tracks.map((track) => (track.id === trackId ? { ...track, ...patch } : track)),
       }),
       withHistory,
+      patch.name !== undefined ? `track-name:${trackId}` : patch.effects ? `fx:${trackId}` : undefined,
     );
   },
 
@@ -224,6 +228,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         ),
       }),
       withHistory,
+      patch.startBar !== undefined || patch.lengthBars !== undefined ? `clip-move:${clipId}` : undefined,
     );
   },
 
@@ -252,8 +257,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     set({ selectedClipId: clipId });
   },
 
-  setBpm(bpm) {
-    mutateProject(set, get, (project) => ({ ...project, bpm: Math.min(200, Math.max(60, bpm)) }));
+  setBpm(bpm, withHistory = true) {
+    mutateProject(set, get, (project) => ({ ...project, bpm: Math.min(200, Math.max(60, bpm)) }), withHistory, 'bpm');
   },
 
   setMasterVolume(volume, withHistory = true) {
@@ -265,10 +270,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   beginHistory() {
-    set((state) => ({ past: [...state.past.slice(-19), state.currentProject], future: [] }));
+    lastHistory = null;
+    set((state) => ({ past: [...state.past.slice(-49), state.currentProject], future: [] }));
   },
 
   undo() {
+    lastHistory = null;
     set((state) => {
       const previous = state.past.at(-1);
       if (!previous) return state;
@@ -276,19 +283,20 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         currentProject: previous,
         projects: mergeProject(state.projects, previous),
         past: state.past.slice(0, -1),
-        future: [state.currentProject, ...state.future].slice(0, 20),
+        future: [state.currentProject, ...state.future].slice(0, 50),
       };
     });
   },
 
   redo() {
+    lastHistory = null;
     set((state) => {
       const next = state.future[0];
       if (!next) return state;
       return {
         currentProject: next,
         projects: mergeProject(state.projects, next),
-        past: [...state.past.slice(-19), state.currentProject],
+        past: [...state.past.slice(-49), state.currentProject],
         future: state.future.slice(1),
       };
     });
@@ -316,14 +324,19 @@ function mutateProject(
   get: () => ProjectStore,
   updater: (project: Project) => Project,
   withHistory = true,
+  historyKey?: string,
 ) {
   const state = get();
   const previous = state.currentProject;
   const next = touch(updater(previous));
+  const now = Date.now();
+  const coalesced = withHistory && historyKey !== undefined && lastHistory?.key === historyKey
+    && lastHistory.projectId === previous.id && now - lastHistory.at <= 600 && state.past.length > 0;
+  lastHistory = withHistory && historyKey ? { key: historyKey, projectId: previous.id, at: now } : null;
   set({
     currentProject: next,
     projects: mergeProject(state.projects, next),
-    past: withHistory ? [...state.past.slice(-19), previous] : state.past,
+    past: withHistory && !coalesced ? [...state.past.slice(-49), previous] : state.past,
     future: withHistory ? [] : state.future,
   });
 }
